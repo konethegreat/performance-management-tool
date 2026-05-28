@@ -1,162 +1,786 @@
+/* =========================================================================
+   Mostoeneng PMS — Editorial Chambers
+   Warm paper canvas, brass accent, serif headings, mono figures.
+   Tokens-first; every class consumed by the JSX is preserved.
+   ========================================================================= */
+
 :root {
-  --navy: #1a2b4a;
-  --navy-2: #24365a;
-  --gold: #c9a227;
-  --bg: #f4f6fa;
-  --card: #ffffff;
-  --ink: #1c2434;
-  --muted: #6b7689;
-  --line: #e3e8f0;
-  --green: #1f9d62;
-  --amber: #d98a1f;
-  --red: #d23b3b;
-  --blue: #2b6cb0;
-  --violet: #6b46c1;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(20, 30, 60, .08), 0 6px 20px rgba(20, 30, 60, .05);
+  /* Surfaces — warm bone canvas, paper-white cards, hairline borders */
+  --bg:        #FBFBFA;
+  --card:      #FFFFFF;
+  --surface-2: #F5F4EF;   /* tray / inset / table-row-warn */
+  --line:      #E8E6E1;   /* hairline borders */
+  --line-2:    #D9D6CF;   /* slightly stronger divider */
+
+  /* Ink — warm off-black, never #000 */
+  --ink:    #1A1715;
+  --ink-2:  #2C2825;      /* secondary, less inked */
+  --muted:  #6B6864;      /* warm gray for meta */
+  --muted-2:#9A968F;      /* even quieter */
+
+  /* Brass — the signature accent. One color, used sparingly. */
+  --brass:      #A8843A;
+  --brass-deep: #806326;
+  --brass-soft: #F2EAD3;  /* paper tint for highlight blocks */
+
+  /* Semantic — warm-tinted, library-tone, never neon */
+  --forest:      #3A6B4A;  --forest-soft: #E6EEE8;
+  --amber:       #B5821E;  --amber-soft:  #F6ECD2;
+  --garnet:      #A53D38;  --garnet-soft: #F3DEDC;
+  --slate:       #3D5878;  --slate-soft:  #DEE5EE;
+  --plum:        #634272;  --plum-soft:   #E5DCEA;
+
+  /* Geometry */
+  --r-sm: 4px;
+  --r:    6px;
+  --r-lg: 10px;
+  --r-pill: 999px;
+
+  /* Elevation — never a drop-shadow as primary cue. Hairlines do the work.
+     One ultra-diffuse warm shadow reserved for the login card and overlays. */
+  --shadow-paper: 0 1px 0 var(--line), 0 12px 28px -16px rgba(70, 55, 30, 0.10);
+
+  /* Type */
+  --serif:  "Newsreader", Georgia, "Times New Roman", serif;
+  --sans:   "Geist", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono:   "Geist Mono", ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.32, 0.72, 0, 1);
+  --t-fast: 140ms var(--ease-soft);
+  --t:      220ms var(--ease-soft);
 }
 
+/* =========================================================================
+   Base
+   ========================================================================= */
+
 * { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-feature-settings: "ss01", "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 a { color: inherit; text-decoration: none; }
-h1 { font-size: 1.6rem; margin: 0 0 4px; }
-h2 { font-size: 1.1rem; margin: 0; }
-h3.sub { font-size: .85rem; color: var(--muted); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
-.subtitle { color: var(--muted); margin: 0 0 20px; }
-.muted { color: var(--muted); }
-.small { font-size: .85rem; }
-.loading { padding: 60px; text-align: center; color: var(--muted); }
 
-/* layout */
-.topbar { display: flex; align-items: center; gap: 24px; background: var(--navy); color: #fff; padding: 0 24px; height: 60px; }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand small { display: block; color: #b9c4da; font-size: .72rem; }
-.brand strong { font-size: 1rem; }
-.brand-mark { background: var(--gold); color: var(--navy); width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; }
-.brand.big { margin-bottom: 24px; }
-.brand.big .brand-mark { width: 44px; height: 44px; }
-.nav { display: flex; gap: 4px; margin-left: 12px; flex: 1; }
-.nav a { padding: 8px 14px; border-radius: 8px; color: #c8d2e6; font-size: .9rem; }
-.nav a:hover { background: var(--navy-2); color: #fff; }
-.nav a.active { background: var(--navy-2); color: #fff; }
-.user-chip { display: flex; align-items: center; gap: 12px; }
+/* Numbers anywhere lock to tabular figures — the editorial signature. */
+table, .stat-value, .score, .bar-value, .stat-hint, .mini-bar + small {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Headings — Newsreader serif. Tight tracking, comfortable line-height. */
+h1 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(1.75rem, 2.4vw, 2.15rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.15rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+h3.sub {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 18px 0 8px;
+  text-transform: none;          /* drop the AI all-caps reflex */
+  letter-spacing: 0;
+}
+h3.sub::before { content: "— "; color: var(--muted-2); }
+
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 24px;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+.muted    { color: var(--muted); }
+.small    { font-size: 0.86rem; }
+.loading  { padding: 72px; text-align: center; color: var(--muted); font-style: italic; }
+
+/* =========================================================================
+   Topbar — warm cream, hairline border, brass mark, serif wordmark
+   ========================================================================= */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0 28px;
+  height: 64px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand strong {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.08rem;
+  letter-spacing: -0.01em;
+}
+.brand small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+  margin-top: 1px;
+}
+.brand-mark {
+  background: var(--ink);
+  color: var(--brass-soft);
+  width: 34px; height: 34px;
+  border-radius: var(--r);
+  display: grid; place-items: center;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+.brand.big { margin-bottom: 28px; }
+.brand.big .brand-mark { width: 46px; height: 46px; font-size: 1.45rem; }
+
+.nav { display: flex; gap: 2px; margin-left: 18px; flex: 1; }
+.nav a {
+  padding: 8px 14px;
+  border-radius: var(--r);
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: color var(--t-fast), background-color var(--t-fast);
+}
+.nav a:hover { color: var(--ink); background: var(--surface-2); }
+.nav a.active {
+  color: var(--ink);
+  background: transparent;
+  box-shadow: inset 0 -2px 0 0 var(--brass);
+  border-radius: 0;
+}
+
+.user-chip { display: flex; align-items: center; gap: 14px; }
 .user-meta { text-align: right; }
-.user-meta small { display: block; color: #b9c4da; font-size: .72rem; }
-.container { max-width: 1080px; margin: 0 auto; padding: 28px 24px 80px; }
+.user-meta strong { font-weight: 600; font-size: 0.92rem; }
+.user-meta small  { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 1px; }
 
-/* cards */
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
-.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.container { max-width: 1140px; margin: 0 auto; padding: 36px 28px 96px; }
+
+/* =========================================================================
+   Cards — hairline-only, no drop shadows. Generous internal padding.
+   ========================================================================= */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 24px 26px;
+  margin-bottom: 22px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  gap: 14px;
+}
 .card-head small { color: var(--muted); }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
 
-/* stats */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
-.stat-row { display: flex; gap: 24px; margin-bottom: 14px; flex-wrap: wrap; }
-.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
-.stat-value { font-size: 1.7rem; font-weight: 700; }
-.stat-value.green { color: var(--green); } .stat-value.amber { color: var(--amber); } .stat-value.red { color: var(--red); }
-.stat-label { color: var(--muted); font-size: .85rem; margin-top: 2px; }
-.stat-hint { color: var(--muted); font-size: .72rem; margin-top: 2px; }
+/* =========================================================================
+   Stats — asymmetric bento. Big serif number, small label.
+   ========================================================================= */
 
-/* tables */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.stat-grid .stat {
+  background: var(--card);
+  border: 0;
+  border-radius: 0;
+  padding: 20px 22px;
+  box-shadow: none;
+}
+
+.stat-row { display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+}
+.stat-value {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.95rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.stat-value.green { color: var(--forest); }
+.stat-value.amber { color: var(--amber); }
+.stat-value.red   { color: var(--garnet); }
+.stat-label { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+.stat-hint  { color: var(--muted-2); font-size: 0.72rem; margin-top: 2px; font-family: var(--mono); }
+
+/* =========================================================================
+   Tables — editorial: sentence-case headers, generous row padding,
+   hairline rules, warm warn row.
+   ========================================================================= */
+
 .table { width: 100%; border-collapse: collapse; }
-.table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); }
-.table td { padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: .92rem; }
-.table.compact td { padding: 7px 8px; }
-.table tr.row-warn { background: #fff7ed; }
+.table th {
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--line-2);
+}
+.table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-size: 0.93rem;
+}
+.table.compact td { padding: 9px 8px; font-size: 0.88rem; }
+.table tr:last-child td { border-bottom: 0; }
+.table tr.row-warn { background: var(--surface-2); }
 .table small { color: var(--muted); }
 
-/* pills & badges */
-.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .74rem; font-weight: 600; }
-.pill.grey { background: #eef1f6; color: #51607a; }
-.pill.green { background: #e3f6ec; color: var(--green); }
-.pill.amber { background: #fdf0db; color: var(--amber); }
-.pill.red { background: #fbe3e3; color: var(--red); }
-.pill.blue { background: #e2eefb; color: var(--blue); }
-.pill.violet { background: #ede7fb; color: var(--violet); }
-.score { font-weight: 700; font-size: 1.05rem; }
-.score small { color: var(--muted); font-weight: 400; font-size: .7rem; }
-.score.green { color: var(--green); } .score.amber { color: var(--amber); } .score.red { color: var(--red); } .score.muted { color: var(--muted); }
+/* =========================================================================
+   Pills & badges — dot + label, not screaming color blocks.
+   The dot is the signal; the label stays ink.
+   ========================================================================= */
 
-/* bars */
-.bar-row { display: grid; grid-template-columns: 170px 1fr 36px; align-items: center; gap: 10px; margin: 7px 0; font-size: .85rem; }
-.bar-label { color: var(--ink); }
-.bar-track { background: #eef1f6; border-radius: 6px; height: 9px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 6px; }
-.bar-fill.green { background: var(--green); } .bar-fill.amber { background: var(--amber); } .bar-fill.red { background: var(--red); }
-.bar-value { text-align: right; font-weight: 600; }
-.mini-bar { background: #eef1f6; border-radius: 5px; height: 6px; width: 110px; overflow: hidden; margin-bottom: 3px; }
-.mini-fill { background: var(--blue); height: 100%; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--r-pill);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+.pill::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted-2);
+  flex-shrink: 0;
+}
+.pill.grey   { background: var(--surface-2);   color: var(--ink-2);  border-color: var(--line); }
+.pill.grey::before   { background: var(--muted-2); }
+.pill.green  { background: var(--forest-soft); color: var(--forest); border-color: #cfe0d4; }
+.pill.green::before  { background: var(--forest); }
+.pill.amber  { background: var(--amber-soft);  color: var(--amber);  border-color: #ecdcb0; }
+.pill.amber::before  { background: var(--amber); }
+.pill.red    { background: var(--garnet-soft); color: var(--garnet); border-color: #ecc9c6; }
+.pill.red::before    { background: var(--garnet); }
+.pill.blue   { background: var(--slate-soft);  color: var(--slate);  border-color: #c7d2e0; }
+.pill.blue::before   { background: var(--slate); }
+.pill.violet { background: var(--plum-soft);   color: var(--plum);   border-color: #d5c5dc; }
+.pill.violet::before { background: var(--plum); }
 
-/* buttons */
-.btn { border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 9px 16px; border-radius: 9px; font-weight: 600; cursor: pointer; font-size: .9rem; }
-.btn:hover { border-color: #c3ccdb; }
-.btn.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
-.btn.primary:hover { background: var(--navy-2); }
-.btn.primary:disabled { opacity: .5; cursor: not-allowed; }
-.btn.ghost { background: transparent; border-color: transparent; color: inherit; }
-.btn.small { padding: 6px 12px; font-size: .82rem; }
-.btn.launch { font-size: 1rem; padding: 12px 22px; }
+.score {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+.score small {
+  color: var(--muted-2);
+  font-weight: 400;
+  font-size: 0.7rem;
+  margin-left: 1px;
+}
+.score.green { color: var(--forest); }
+.score.amber { color: var(--amber); }
+.score.red   { color: var(--garnet); }
+.score.muted { color: var(--muted-2); }
 
-/* launch panel */
-.launch-panel { display: flex; justify-content: space-between; align-items: center; gap: 20px; background: linear-gradient(135deg, var(--navy), var(--navy-2)); color: #fff; padding: 22px 24px; border-radius: var(--radius); margin-bottom: 22px; flex-wrap: wrap; }
-.launch-panel h2 { color: #fff; }
-.launch-panel p { color: #c8d2e6; margin: 6px 0 0; max-width: 460px; }
+/* =========================================================================
+   Bars — quiet, no gradient fills. Same hairline language as cards.
+   ========================================================================= */
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 44px;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 0.88rem;
+}
+.bar-label { color: var(--ink-2); }
+.bar-track {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  height: 8px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: var(--r-sm);
+  transition: width var(--t);
+}
+.bar-fill.green { background: var(--forest); }
+.bar-fill.amber { background: var(--amber); }
+.bar-fill.red   { background: var(--garnet); }
+.bar-value {
+  text-align: right;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.86rem;
+}
+
+.mini-bar {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  height: 6px;
+  width: 120px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.mini-fill { background: var(--brass); height: 100%; }
+
+/* Optional ring component (kept for forward-compat — currently unused in JSX) */
+.ring-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.ring {
+  --pct: 0;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background:
+    conic-gradient(var(--brass) calc(var(--pct) * 1%), var(--surface-2) 0);
+  display: grid; place-items: center;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--ink);
+  position: relative;
+}
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: var(--card);
+  border-radius: 50%;
+}
+.ring span { position: relative; z-index: 1; }
+.ring.green { --ring-tone: var(--forest); }
+.ring.amber { --ring-tone: var(--amber); }
+.ring.red   { --ring-tone: var(--garnet); }
+
+/* =========================================================================
+   Buttons — sharp, low radius, no drop shadows.
+   Press feedback via transform; hover via subtle ink shift.
+   ========================================================================= */
+
+.btn {
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink);
+  padding: 9px 16px;
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--t-fast), background-color var(--t-fast), transform var(--t-fast), color var(--t-fast);
+}
+.btn:hover  { border-color: var(--ink-2); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.btn.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #FBFBFA;
+}
+.btn.primary:hover    { background: var(--ink-2); border-color: var(--ink-2); }
+.btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.btn.ghost:hover { color: var(--ink); }
+
+.btn.small  { padding: 6px 12px; font-size: 0.83rem; }
+.btn.launch { font-size: 0.98rem; padding: 12px 22px; }
+
+/* =========================================================================
+   Launch panel — the signature surface. Brass left rule, paper tray,
+   no gradient. Reads like a heading on a legal pleading.
+   ========================================================================= */
+
+.launch-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brass);
+  border-radius: var(--r-lg);
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+.launch-panel h2 { color: var(--ink); }
+.launch-panel p {
+  color: var(--muted);
+  margin: 8px 0 0;
+  max-width: 480px;
+}
 .launch-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
-.launch-buttons .btn.primary { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+.launch-buttons .btn.primary {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--ink);
+}
+.launch-buttons .btn.primary:hover { background: var(--brass-deep); border-color: var(--brass-deep); color: var(--brass-soft); }
 
-/* trend */
-.trend { display: flex; gap: 18px; align-items: flex-end; height: 140px; padding-top: 10px; }
-.trend-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; flex: 1; max-width: 80px; }
-.trend-bar { width: 100%; background: linear-gradient(var(--navy), var(--blue)); border-radius: 6px 6px 0 0; min-height: 6px; }
-.trend-col small { color: var(--muted); font-size: .72rem; }
+/* =========================================================================
+   Trend — solid brass bars on paper, no gradient.
+   ========================================================================= */
 
-/* feedback rows */
-.feedback-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); gap: 12px; }
+.trend {
+  display: flex;
+  gap: 22px;
+  align-items: flex-end;
+  height: 160px;
+  padding-top: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.trend-col {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1;
+  max-width: 84px;
+}
+.trend-bar {
+  width: 100%;
+  background: var(--ink);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  min-height: 6px;
+  transition: height var(--t);
+}
+.trend-col:last-child .trend-bar { background: var(--brass); }
+.trend-col small { color: var(--muted); font-size: 0.72rem; }
+.trend-col strong { font-family: var(--mono); font-weight: 500; font-size: 0.86rem; }
+
+/* =========================================================================
+   Feedback rows
+   ========================================================================= */
+
+.feedback-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 14px;
+}
 .feedback-row:last-child { border-bottom: none; }
 .feedback-row small { display: block; color: var(--muted); }
 .feedback-row-actions { display: flex; align-items: center; gap: 10px; }
 
-/* rating form */
-.competency-rate { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); gap: 16px; }
-.competency-rate:last-child { border-bottom: none; }
-.competency-meta small { display: block; color: var(--muted); margin-top: 2px; max-width: 460px; }
-.scale { display: flex; gap: 6px; }
-.scale-btn { width: 40px; height: 40px; border-radius: 9px; border: 1px solid var(--line); background: #fff; font-weight: 700; cursor: pointer; }
-.scale-btn:hover { border-color: var(--navy); }
-.scale-btn.selected { background: var(--navy); color: #fff; border-color: var(--navy); }
-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 14px; }
-input, textarea { width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; font: inherit; font-weight: 400; }
-textarea { resize: vertical; }
-.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 8px; }
+/* =========================================================================
+   Rating form — the scale buttons read as a deliberate ruler
+   ========================================================================= */
 
-/* detail */
-.detail-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-.detail-head-right { display: flex; align-items: center; gap: 12px; }
-.workflow-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
-.summary { background: #f7f9fc; border-left: 3px solid var(--gold); padding: 12px 16px; margin: 12px 0 0; border-radius: 0 8px 8px 0; color: var(--ink); }
+.competency-rate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 18px;
+}
+.competency-rate:last-child { border-bottom: none; }
+.competency-meta small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.scale { display: flex; gap: 6px; }
+.scale-btn {
+  width: 42px; height: 42px;
+  border-radius: var(--r);
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background-color var(--t-fast), transform var(--t-fast);
+}
+.scale-btn:hover    { border-color: var(--ink-2); }
+.scale-btn:active   { transform: translateY(1px); }
+.scale-btn.selected {
+  background: var(--ink);
+  color: var(--brass-soft);
+  border-color: var(--ink);
+}
+
+label {
+  display: block;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+  margin-bottom: 16px;
+}
+input, textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  font: inherit;
+  font-weight: 400;
+  color: var(--ink);
+  background: var(--card);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+input:focus, textarea:focus {
+  outline: 0;
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px var(--brass-soft);
+}
+textarea { resize: vertical; min-height: 96px; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.form-page { /* parent wrapper for FeedbackForm — kept as no-op */ }
+
+/* =========================================================================
+   Detail page
+   ========================================================================= */
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.detail-head-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.workflow-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* The signature motif: brass rule + paper tint */
+.summary {
+  background: var(--brass-soft);
+  border-left: 3px solid var(--brass);
+  padding: 14px 18px;
+  margin: 14px 0 0;
+  border-radius: 0 var(--r) var(--r) 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
 .competency-list { margin: 8px 0; }
-.goal { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+
+.goal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 14px;
+}
 .goal:last-child { border-bottom: none; }
 .goal small { display: block; color: var(--muted); }
 
-/* timeline */
-.timeline { list-style: none; padding: 0; margin: 0; }
-.timeline li { display: flex; gap: 12px; padding: 8px 0; }
-.timeline .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--navy); margin-top: 5px; flex-shrink: 0; }
-.timeline small { display: block; color: var(--muted); font-size: .76rem; }
+/* =========================================================================
+   Timeline — vertical rail with brass anchors
+   ========================================================================= */
 
-/* login */
-.login-screen { min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, var(--navy), #0f1a30); padding: 20px; }
-.login-card { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.timeline {
+  list-style: none;
+  padding: 4px 0 0 14px;
+  margin: 0;
+  position: relative;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: var(--line-2);
+}
+.timeline li {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  position: relative;
+}
+.timeline .dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--brass);
+  margin: 6px 0 0 -14px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.timeline li:last-child .dot { background: var(--brass); }
+.timeline small { display: block; color: var(--muted); font-size: 0.76rem; font-family: var(--mono); }
+
+/* =========================================================================
+   Login — single column, paper-quiet. No gradient sky.
+   The brand mark and serif wordmark do the work.
+   ========================================================================= */
+
+.login-screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  padding: 24px;
+  position: relative;
+  isolation: isolate;
+}
+/* a single warm light spot, low opacity — subtle depth without a gradient */
+.login-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(168, 132, 58, 0.06), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(168, 132, 58, 0.04), transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-paper);
+}
 .login-card form { margin-bottom: 20px; }
-.login-card .btn.primary { width: 100%; }
-.demo-logins { border-top: 1px solid var(--line); padding-top: 16px; }
-.demo-logins p { font-size: .82rem; color: var(--muted); margin: 0 0 10px; }
-.demo-btn { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left; border: 1px solid var(--line); background: #fafbfd; border-radius: 9px; padding: 8px 12px; margin-bottom: 7px; cursor: pointer; }
-.demo-btn:hover { border-color: var(--navy); }
-.demo-btn span { color: var(--muted); font-size: .8rem; }
+.login-card .btn.primary { width: 100%; padding: 11px 16px; }
 
-.error { background: #fbe3e3; color: var(--red); padding: 10px 14px; border-radius: 9px; margin-bottom: 14px; font-size: .9rem; }
+.demo-logins { border-top: 1px solid var(--line); padding-top: 18px; }
+.demo-logins p {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.demo-logins code {
+  font-family: var(--mono);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  font-size: 0.78rem;
+}
+.demo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: var(--r);
+  padding: 10px 13px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+  transition: border-color var(--t-fast), background-color var(--t-fast);
+}
+.demo-btn:hover { border-color: var(--ink-2); background: var(--surface-2); }
+.demo-btn strong { font-weight: 600; font-size: 0.88rem; }
+.demo-btn span { color: var(--muted); font-size: 0.78rem; font-family: var(--mono); margin-top: 2px; }
+
+/* =========================================================================
+   Errors — direct, not loud. No exclamation marks anywhere in the system.
+   ========================================================================= */
+
+.error {
+  background: var(--garnet-soft);
+  color: var(--garnet);
+  border: 1px solid #ecc9c6;
+  border-left: 3px solid var(--garnet);
+  padding: 11px 15px;
+  border-radius: 0 var(--r) var(--r) 0;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+/* =========================================================================
+   Reduced motion — respect the system preference
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
