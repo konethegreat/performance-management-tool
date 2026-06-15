@@ -7,8 +7,15 @@ import { requireAuth } from "../middleware/auth.js";
 import { aiEnabled, model } from "../lib/ai/client.js";
 import { organizeFeedback } from "../lib/ai/organizeFeedback.js";
 import { biasCheck } from "../lib/ai/biasCheck.js";
+import { draftReport } from "../lib/ai/draftReport.js";
 
 const router = Router();
+
+const DRAFT_INCLUDE = {
+  subject: true,
+  cycle: true,
+  requests: { include: { response: { include: { ratings: { include: { competency: true } } } } } },
+};
 
 // Lets the frontend show/hide AI affordances and pick copy.
 router.get("/status", requireAuth, (_req, res) => {
@@ -53,6 +60,25 @@ router.post("/bias-check", requireAuth, async (req, res) => {
   const result = await biasCheck({ strengths, improvements }, { actorId: req.user.id });
   if (!result) return res.json({ aiEnabled: false });
   res.json({ aiEnabled: true, ...result });
+});
+
+// ── Report Draft Assistant: AI-drafted narrative for the owning manager ──
+router.post("/reviews/:id/draft", requireAuth, async (req, res) => {
+  if (!aiEnabled()) return res.json({ aiEnabled: false });
+  const review = await prisma.performanceReview.findUnique({
+    where: { id: req.params.id },
+    include: DRAFT_INCLUDE,
+  });
+  if (!review) return res.status(404).json({ error: "Not found" });
+  if (review.managerId !== req.user.id && req.user.role !== "ADMIN") {
+    return res.status(403).json({ error: "Not your report" });
+  }
+  const memory = await prisma.attorneyMemory.findUnique({ where: { attorneyId: review.subjectId } });
+  const text = await draftReport(review, memory, { actorId: req.user.id });
+  if (text == null) return res.json({ aiEnabled: false });
+
+  await prisma.performanceReview.update({ where: { id: review.id }, data: { aiDraftSummary: text } });
+  res.json({ aiEnabled: true, draft: text });
 });
 
 export default router;
