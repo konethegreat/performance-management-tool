@@ -85,7 +85,7 @@ router.post("/request/:id", requireAuth, async (req, res) => {
     await prisma.rating.deleteMany({ where: { responseId: existing.id } });
     response = await prisma.feedbackResponse.update({
       where: { id: existing.id },
-      data: { strengths, improvements, sourceWeight },
+      data: { strengths, improvements, sourceWeight, organized: null }, // stale AI structure invalidated
     });
   } else {
     response = await prisma.feedbackResponse.create({
