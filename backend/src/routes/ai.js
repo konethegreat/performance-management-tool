@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { aiEnabled, model } from "../lib/ai/client.js";
 import { organizeFeedback } from "../lib/ai/organizeFeedback.js";
+import { biasCheck } from "../lib/ai/biasCheck.js";
 
 const router = Router();
 
@@ -42,6 +43,16 @@ router.post("/organize/:requestId", requireAuth, async (req, res) => {
     data: { organized: JSON.stringify(organized) },
   });
   res.json({ aiEnabled: true, organized });
+});
+
+// ── Bias & Quality Check: advisory review of draft feedback before submit ──
+router.post("/bias-check", requireAuth, async (req, res) => {
+  if (!aiEnabled()) return res.json({ aiEnabled: false });
+  const { strengths, improvements } = req.body || {};
+  if (!strengths && !improvements) return res.status(400).json({ error: "Nothing to check" });
+  const result = await biasCheck({ strengths, improvements }, { actorId: req.user.id });
+  if (!result) return res.json({ aiEnabled: false });
+  res.json({ aiEnabled: true, ...result });
 });
 
 export default router;
