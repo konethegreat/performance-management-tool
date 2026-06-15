@@ -8,8 +8,13 @@ import { aiEnabled, model } from "../lib/ai/client.js";
 import { organizeFeedback } from "../lib/ai/organizeFeedback.js";
 import { biasCheck } from "../lib/ai/biasCheck.js";
 import { draftReport } from "../lib/ai/draftReport.js";
+import { refreshAttorneyMemory } from "../lib/ai/memory.js";
 
 const router = Router();
+
+function canSeeMemory(user, attorneyId, managerId) {
+  return user.role === "ADMIN" || user.id === attorneyId || user.id === managerId;
+}
 
 const DRAFT_INCLUDE = {
   subject: true,
@@ -79,6 +84,25 @@ router.post("/reviews/:id/draft", requireAuth, async (req, res) => {
 
   await prisma.performanceReview.update({ where: { id: review.id }, data: { aiDraftSummary: text } });
   res.json({ aiEnabled: true, draft: text });
+});
+
+// ── Attorney Memory: read profile ──
+router.get("/attorneys/:id/memory", requireAuth, async (req, res) => {
+  const attorney = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!attorney) return res.status(404).json({ error: "Not found" });
+  if (!canSeeMemory(req.user, attorney.id, attorney.managerId)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const memory = await prisma.attorneyMemory.findUnique({ where: { attorneyId: attorney.id } });
+  res.json({ aiEnabled: aiEnabled(), memory });
+});
+
+// ── Attorney Memory: regenerate on demand (manager/admin) ──
+router.post("/attorneys/:id/memory/refresh", requireAuth, async (req, res) => {
+  if (!aiEnabled()) return res.json({ aiEnabled: false });
+  if (!["MANAGER", "ADMIN"].includes(req.user.role)) return res.status(403).json({ error: "Forbidden" });
+  const memory = await refreshAttorneyMemory(req.params.id, { actorId: req.user.id });
+  res.json({ aiEnabled: true, memory });
 });
 
 export default router;

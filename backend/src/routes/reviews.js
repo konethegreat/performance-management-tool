@@ -214,6 +214,15 @@ function transition(toStatus, fromAllowed, stampField, action) {
     }
     const updated = await prisma.performanceReview.update({ where: { id: review.id }, data });
     await event(review.id, req.user.id, action, req.body?.note || null);
+
+    // On approval, refresh the attorney's AI memory profile (best-effort, never
+    // blocks the response; AI is fully optional).
+    if (toStatus === "APPROVED") {
+      import("../lib/ai/memory.js")
+        .then(({ refreshAttorneyMemory }) => refreshAttorneyMemory(review.subjectId, { actorId: req.user.id }))
+        .catch((e) => console.error("memory refresh failed:", e.message));
+    }
+
     res.json({ id: updated.id, status: updated.status });
   };
 }
