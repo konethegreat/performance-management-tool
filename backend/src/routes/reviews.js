@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { computeOverallScore, competencyBreakdown, bySourceBreakdown, completionRate, cycleTime } from "../lib/scoring.js";
+import { notify, notifyMany } from "../lib/notify.js";
 
 const router = Router();
 
@@ -137,6 +138,12 @@ router.post("/launch", requireAuth, async (req, res) => {
     data: { status: "LAUNCHED", launchedAt: new Date() },
   });
   await event(review.id, me.id, "LAUNCHED", `Fanned out ${reviewers.length} feedback requests.`);
+  await notifyMany(
+    reviewers.map((r) => r.reviewerId).filter((id) => id !== me.id),
+    "FEEDBACK_REQUESTED",
+    `Feedback requested for ${me.firstName} ${me.lastName}'s ${cycle.name} review`,
+    "/feedback"
+  );
   res.status(201).json({ id: updated.id, status: updated.status, launchedAt: updated.launchedAt });
 });
 
@@ -214,6 +221,14 @@ function transition(toStatus, fromAllowed, stampField, action) {
     }
     const updated = await prisma.performanceReview.update({ where: { id: review.id }, data });
     await event(review.id, req.user.id, action, req.body?.note || null);
+
+    // Notify the attorney of the state change.
+    await notify(
+      review.subjectId,
+      toStatus === "APPROVED" ? "APPROVED" : "STATE_CHANGE",
+      toStatus === "APPROVED" ? "Your performance review was approved and is ready to view" : `Your review moved to ${toStatus}`,
+      `/reviews/${review.id}`
+    );
 
     // On approval, refresh the attorney's AI memory profile (best-effort, never
     // blocks the response; AI is fully optional).

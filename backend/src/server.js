@@ -10,6 +10,7 @@ import reviewRoutes from "./routes/reviews.js";
 import feedbackRoutes from "./routes/feedback.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import aiRoutes from "./routes/ai.js";
+import notificationRoutes from "./routes/notifications.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Fallthrough error handler
 app.use((err, _req, res, _next) => {
