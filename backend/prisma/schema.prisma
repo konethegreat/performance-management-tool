@@ -113,6 +113,10 @@ model User {
 
   goals      Goal[]
   events     ReportEvent[]
+
+  // AI memory profile (one per attorney) + in-app notifications
+  memory        AttorneyMemory? @relation("AttorneyMemory")
+  notifications Notification[]  @relation("UserNotifications")
 }
 
 model ReviewCycle {
@@ -168,6 +172,8 @@ model PerformanceReview {
   // Manager's narrative report
   draftSummary  String? @db.Text
   finalSummary  String? @db.Text
+  // AI-generated draft (kept separate from the human-authored draftSummary)
+  aiDraftSummary String? @db.Text
   // Composite score (computed + weighted across submitted feedback)
   overallScore  Float?
 
@@ -206,6 +212,8 @@ model FeedbackResponse {
   // Free-text strengths / areas to improve
   strengths   String?  @db.Text
   improvements String? @db.Text
+  // AI-structured version of this feedback (JSON string), set by the Review Organizer
+  organized   String?  @db.Text
   // Source-level confidence weight (e.g. client capped lower) — set at fan-out
   sourceWeight Float   @default(1.0)
   submittedAt DateTime @default(now())
@@ -252,4 +260,50 @@ model ReportEvent {
   createdAt DateTime @default(now())
 
   @@index([reviewId])
+}
+
+// ─────────────────────────────  AI / NOTIFICATIONS  ─────────────────────────────
+
+// A persistent, AI-maintained longitudinal profile of one attorney, refreshed
+// when a report is APPROVED and fed into the Report Draft Assistant.
+model AttorneyMemory {
+  id          String   @id @default(cuid())
+  attorneyId  String   @unique
+  attorney    User     @relation("AttorneyMemory", fields: [attorneyId], references: [id], onDelete: Cascade)
+  summary     String?  @db.Text
+  themes      String?  @db.Text // JSON string array of recurring themes
+  strengths   String?  @db.Text
+  risks       String?  @db.Text // watch areas
+  trajectory  String?  @db.Text // performance direction over cycles
+  lastCycleId String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+// In-app notification (feedback requested, state change, approval, etc.)
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String // FEEDBACK_REQUESTED | STATE_CHANGE | APPROVED | SENT_BACK | ...
+  message   String
+  link      String? // e.g. /reviews/:id or /feedback
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+// Audit row for every AI call (cost + transparency for an AI-run PMS).
+model AiRun {
+  id           String   @id @default(cuid())
+  kind         String // ORGANIZE | BIAS_CHECK | DRAFT | MEMORY
+  model        String
+  refId        String? // review / request / attorney id
+  actorId      String?
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime @default(now())
+
+  @@index([kind, createdAt])
 }
