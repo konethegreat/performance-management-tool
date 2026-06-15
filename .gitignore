@@ -27,3 +27,6 @@ Thumbs.db
 # ── Prisma local artifacts ──
 backend/prisma/*.db
 backend/prisma/migrations/dev.db*
+
+# ── superpowers brainstorm scratch ──
+.superpowers/
