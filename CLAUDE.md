@@ -83,6 +83,23 @@ Seeded logins, password `Password123!` for all:
 - **Secrets:** `.env` files are gitignored (see `.gitignore`, hardened to exclude all
   `.env*` except `.env.example`). Never commit real `DATABASE_URL` / `JWT_SECRET`.
 
+## AI layer & newer capabilities
+
+- **AI is optional and server-side.** `backend/src/lib/ai/*` calls the Anthropic SDK;
+  `aiEnabled()` gates everything on `AI_ENABLED !== "false"` + `ANTHROPIC_API_KEY`. When off,
+  AI routes return `{ aiEnabled: false }` (HTTP 200) and the UI degrades — never assume AI is
+  available. Default model `claude-opus-4-8`, override via `AI_MODEL`. Key lives in
+  `backend/.env` (gitignored) and must never reach the frontend.
+- **Features:** Review Organizer, Bias & Quality Check, Report Draft Assistant, Attorney
+  Memory (auto-refreshed on `APPROVED`). All outputs are AI-labelled, editable, never
+  auto-finalized; every call writes an `AiRun` audit row.
+- **Privacy/POPIA:** AI sends review text to Anthropic. Documented in README/ARCHITECTURE;
+  `AI_ENABLED="false"` ships it off.
+- **Notifications:** `Notification` rows written by `backend/src/lib/notify.js` on launch +
+  state changes; surfaced via the top-bar bell and an SLA nudge banner. In-app only.
+- **PDF export:** client-side `@react-pdf/renderer` in `frontend/src/pdf/` (review, annual,
+  client, team-snapshot) on the "Counsel" letterhead; `download.js` triggers on click.
+
 ## Where to read more
 
 `docs/DATA_MODEL.md` (entity rationale), `docs/CADENCE.md` (launch/SLA rules),

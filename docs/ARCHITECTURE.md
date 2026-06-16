@@ -23,6 +23,8 @@ separately.
 | Auth         | `src/middleware/auth.js`      | JWT sign/verify, `requireAuth`, `requireRole`   |
 | Routes       | `src/routes/*.js`             | HTTP handlers, validation, authorization checks |
 | Domain logic | `src/lib/scoring.js`          | Weighted scoring, completion rate, cycle time   |
+| AI           | `src/lib/ai/*` + `routes/ai.js` | Anthropic-backed organizer, bias check, draft, memory |
+| Notifications| `src/lib/notify.js` + `routes/notifications.js` | In-app notification writes + read state |
 | Data         | `src/lib/prisma.js` + schema  | Prisma client + the relational model            |
 
 ## Authorization model
@@ -63,6 +65,46 @@ Composite score = weighted mean of every rating, where each rating's weight is
 `competency.weight × response.sourceWeight`. This encodes two firm policies in one
 number: which competencies matter most (e.g. Ethics > Business Development) and which
 voices carry most weight (e.g. Manager > a single Peer). See `src/lib/scoring.js`.
+
+## AI layer
+
+All AI runs **server-side** through `src/lib/ai/` (the Anthropic key never reaches the
+SPA). The layer is fully optional: `aiEnabled()` is true only when `AI_ENABLED !== "false"`
+and `ANTHROPIC_API_KEY` is set; otherwise every AI route returns `{ aiEnabled: false }` and
+the UI shows an "AI not configured" state. Default model is `claude-opus-4-8` (override via
+`AI_MODEL`).
+
+| Feature | Service | Technique |
+|---------|---------|-----------|
+| Review Organizer | `organizeFeedback.js` | Structured output (Zod) → strengths/improvements/themes; persisted on `FeedbackResponse.organized` |
+| Bias & Quality Check | `biasCheck.js` | Structured output → flags + specificity score; advisory, not persisted |
+| Report Draft Assistant | `draftReport.js` | Streamed narrative (adaptive thinking) from 360 + memory; persisted on `PerformanceReview.aiDraftSummary` |
+| Attorney Memory | `memory.js` | Longitudinal profile from APPROVED reports; auto-refreshed on approval; feeds the draft assistant |
+
+Every call writes an `AiRun` audit row (kind, model, tokens, actor). AI outputs are always
+human-editable and never auto-finalized — a manager owns the final report.
+
+**Authorization** follows the same two-layer model as the rest of the API: role gate +
+row-level ownership. E.g. memory read/refresh is scoped to ADMIN, the attorney, or their
+owning manager.
+
+> **Privacy / POPIA.** AI features send review free-text to the Anthropic API (no training
+> on API data by default). Performance data is sensitive personal information; the firm
+> should confirm this is acceptable. `AI_ENABLED="false"` disables the layer entirely.
+
+## Notifications & SLA nudges
+
+`src/lib/notify.js` writes `Notification` rows (best-effort — a failed notification never
+breaks the triggering action). Notifications fire on launch (to each reviewer) and on every
+state transition (to the subject). Managers also see an SLA nudge banner computed from the
+existing `cycleTime` analytics (`launchedAt + slaDays`). Delivery is in-app only.
+
+## PDF export
+
+PDFs are generated **client-side** with `@react-pdf/renderer` (`frontend/src/pdf/`) — real
+downloadable files, no backend headless browser. Four branded "Counsel" templates: approved
+review report, annual rollup, client feedback summary, and manager team snapshot. The
+`download.js` helper produces a blob on click after any needed data fetch.
 
 ## What a production hardening pass would add
 

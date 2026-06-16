@@ -57,6 +57,33 @@ flow — it owns `launch`, the `transition()` factory (submit/finalize/approve),
 When adding endpoints that expose review or feedback data, replicate this pattern — a
 role gate alone is not sufficient.
 
+## AI & notifications layer
+
+```
+src/lib/ai/client.js        aiEnabled(), model(), client() (lazy Anthropic), logRun() → AiRun
+src/lib/ai/organizeFeedback.js  structured output (zodOutputFormat) → strengths/improvements/themes
+src/lib/ai/biasCheck.js     structured output → flags + specificityScore (advisory)
+src/lib/ai/draftReport.js   streamed narrative (adaptive thinking) → manager draft
+src/lib/ai/memory.js        refreshAttorneyMemory(attorneyId) — longitudinal profile
+src/routes/ai.js            /status, /organize/:id, /bias-check, /reviews/:id/draft, /attorneys/:id/memory[/refresh]
+src/lib/notify.js           notify()/notifyMany() → Notification rows (best-effort)
+src/routes/notifications.js GET /, POST /:id/read, POST /read-all
+```
+
+- **Graceful-fallback contract:** every AI route returns `{ aiEnabled: false }` (200) when
+  `aiEnabled()` is false — do not throw. Replicate this in any new AI endpoint.
+- **SDK specifics (v0.104.x):** structured output uses `import { zodOutputFormat } from
+  "@anthropic-ai/sdk/helpers/zod"` (single arg), `client.messages.parse({ output_config:
+  { format: zodOutputFormat(Schema) } })`, result on `res.parsed_output`. Drafting uses
+  `client.messages.stream(...).finalMessage()`. Default model `claude-opus-4-8`.
+- **Authorization:** AI routes keep the two-layer model. Memory refresh is scoped to ADMIN
+  or the attorney's owning manager (not any manager) — see the IDOR fix.
+- **Approve hook:** the `transition()` factory dynamically imports `memory.js` and fires
+  `refreshAttorneyMemory` after `APPROVED` (best-effort `.catch`), so approval never depends
+  on AI. It also notifies the subject; `launch` notifies reviewers.
+- **New models/fields:** `AttorneyMemory`, `Notification`, `AiRun`; `FeedbackResponse.organized`
+  (JSON string, cleared on resubmit), `PerformanceReview.aiDraftSummary`.
+
 ## Things that will bite you
 
 - **`prisma db push`, not migrations.** No `prisma/migrations/` history exists. Edit

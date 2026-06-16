@@ -17,6 +17,8 @@ Built by the AI development team as a reviewable, runnable v1.
 | Backend  | Node.js + Express                               |
 | Database | PostgreSQL (via Prisma ORM)                     |
 | Auth     | JWT (access tokens) + bcrypt password hashing   |
+| AI       | Anthropic Claude (optional, server-side)        |
+| PDF      | `@react-pdf/renderer` (client-side export)      |
 
 ```
 mostoeneng-pms/
@@ -40,6 +42,8 @@ docker compose up -d
 # 2. Backend
 cd backend
 cp .env.example .env          # adjust if needed
+# (optional) enable AI: set ANTHROPIC_API_KEY in .env. Without a key the app
+# runs normally and AI features show an "AI not configured" state.
 npm install
 npm run db:push               # create tables from schema
 npm run db:seed               # load realistic sample data
@@ -89,5 +93,49 @@ DRAFT ──submit──▶ IN_REVIEW ──finalize──▶ FINALIZED ──ap
 ```
 
 Approved quarterly reports are immutable and feed the **annual rollup**.
+
+---
+
+## AI features (optional)
+
+Set `ANTHROPIC_API_KEY` in `backend/.env` to enable the intelligence layer. All AI
+runs server-side; the key never reaches the browser. Configure via:
+
+```
+AI_ENABLED="true"              # master switch — set "false" to disable entirely
+ANTHROPIC_API_KEY="sk-ant-..." # your key
+AI_MODEL="claude-opus-4-8"     # or claude-sonnet-4-6 / claude-haiku-4-5 for lower cost
+```
+
+- **Review Organizer** — restructures messy free-text feedback into clear strengths /
+  improvement bullets + themes.
+- **Bias & Quality Check** — flags vague, non-actionable, or potentially biased wording
+  before feedback is submitted (advisory; never blocks).
+- **Report Draft Assistant** — drafts the manager's narrative from the 360 feedback +
+  the attorney's memory; the manager always edits and approves.
+- **Attorney Memory** — a persistent profile refreshed when a report is approved, feeding
+  the draft assistant so reviews build on history.
+
+Every AI output is labelled "AI-assisted," editable, and never auto-finalized. Each call
+is logged to the `AiRun` table for cost/audit transparency.
+
+> **⚠️ Privacy / POPIA.** AI features transmit review free-text to the Anthropic API.
+> Anthropic does not train on API inputs by default, but performance data is sensitive
+> personal information. Confirm with your HR/privacy owner before enabling in production;
+> use `AI_ENABLED="false"` to ship without it.
+
+## PDF export
+
+Branded, letterhead-styled PDFs are generated client-side: approved review reports,
+the annual rollup, client feedback summaries, and a manager team snapshot. Look for the
+**Download PDF** buttons on the relevant screens.
+
+## Notifications
+
+In-app notifications fire when feedback is requested (on launch) and when a review changes
+state; managers also see an SLA nudge banner for overdue reviews. The bell in the top bar
+shows unread count.
+
+---
 
 See `docs/ARCHITECTURE.md` and `docs/DATA_MODEL.md` for the full design.

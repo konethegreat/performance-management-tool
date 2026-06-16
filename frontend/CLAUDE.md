@@ -56,6 +56,23 @@ src/styles.css            All styling (class-based; pill/score/bar tones live he
 - **Styling** is plain CSS classes in `styles.css` — no CSS modules, Tailwind, or inline
   design systems. Match existing class names (`card`, `stat`, `pill`, `btn`, `grid-2`).
 
+## AI, notifications, PDF (added capabilities)
+
+- **AI affordances** are gated on `useAiStatus()` (`src/hooks/useAiStatus.js`, fetches
+  `/api/ai/status` once, module-cached). Only render AI buttons when `aiEnabled`, and handle
+  the `{ aiEnabled: false }` response from AI POSTs (show a toast/note, don't crash). AI
+  output is shown with `<AiBadge/>` and is always presented as editable/assistive.
+  - Review Organizer + "Draft with AI" + Attorney Memory panel live in `pages/ReviewDetail.jsx`.
+  - Bias & Quality Check lives in `pages/FeedbackForm.jsx`.
+- **Toasts:** `useToast()` from `components/Toast.jsx` (provider wraps the app in `main.jsx`).
+  Use for action feedback. `Skeleton`/`SkeletonCard` and `Empty` are the loading/empty primitives.
+- **Notifications:** `components/NotificationsBell.jsx` polls `/api/notifications` every 30s;
+  it's mounted in `Layout`. SLA nudge banner is on `ManagerDashboard`.
+- **PDF export:** `src/pdf/` templates (`@react-pdf/renderer`) + `pdf/download.js`
+  (`downloadPdf(<Doc/>, filename)`); call it on click, fetching data first if needed. Note
+  react-pdf is heavy and lands in the main bundle (the 500 kB build warning is expected).
+- **Admin** (`pages/Admin.jsx`, route `/admin`, ADMIN-only) manages cycles + views competencies.
+
 ## Mind the backend visibility rules
 
 The server hides an attorney's scores, competency breakdown, and final summary until the
