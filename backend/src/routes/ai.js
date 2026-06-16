@@ -97,11 +97,16 @@ router.get("/attorneys/:id/memory", requireAuth, async (req, res) => {
   res.json({ aiEnabled: aiEnabled(), memory });
 });
 
-// ── Attorney Memory: regenerate on demand (manager/admin) ──
+// ── Attorney Memory: regenerate on demand (admin, or the attorney's manager) ──
 router.post("/attorneys/:id/memory/refresh", requireAuth, async (req, res) => {
   if (!aiEnabled()) return res.json({ aiEnabled: false });
-  if (!["MANAGER", "ADMIN"].includes(req.user.role)) return res.status(403).json({ error: "Forbidden" });
-  const memory = await refreshAttorneyMemory(req.params.id, { actorId: req.user.id });
+  const attorney = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!attorney) return res.status(404).json({ error: "Not found" });
+  // Row-level scope: ADMIN may refresh anyone; a MANAGER only their own reports.
+  if (!(req.user.role === "ADMIN" || attorney.managerId === req.user.id)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const memory = await refreshAttorneyMemory(attorney.id, { actorId: req.user.id });
   res.json({ aiEnabled: true, memory });
 });
 
