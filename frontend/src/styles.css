@@ -844,6 +844,15 @@ textarea { resize: vertical; min-height: 96px; }
   border-radius: var(--r-pill);
   padding: 2px 9px;
 }
+/* Top-bar AI status chip */
+.ai-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.74rem; font-weight: 500; white-space: nowrap; cursor: default;
+  padding: 5px 11px; border-radius: var(--r-pill);
+}
+.ai-chip.on  { color: var(--brass-deep); background: var(--brass-soft); border: 1px solid #ecdcb0; }
+.ai-chip.off { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+
 .ai-panel {
   background: var(--brass-soft);
   border: 1px solid #ecdcb0;

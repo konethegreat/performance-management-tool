@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import NotificationsBell from "./NotificationsBell.jsx";
+import { AiStatusChip } from "./AiStatusChip.jsx";
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -31,6 +32,7 @@ export default function Layout() {
             <Link key={to} to={to} className={loc.pathname === to ? "active" : ""}>{label}</Link>
           ))}
         </nav>
+        <AiStatusChip />
         <NotificationsBell />
         <div className="user-chip">
           <div className="user-meta">
