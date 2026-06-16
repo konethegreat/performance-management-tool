@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { sourceLabel } from "../components/ui.jsx";
+import { useToast } from "../components/Toast.jsx";
+import { useAiStatus } from "../hooks/useAiStatus.js";
+
+const FLAG_LABEL = { vague: "Vague", non_actionable: "Not actionable", potentially_biased: "Possible bias" };
 
 const SCALE = [
   [1, "Below expectations"],
@@ -14,12 +18,16 @@ const SCALE = [
 export default function FeedbackForm() {
   const { requestId } = useParams();
   const nav = useNavigate();
+  const toast = useToast();
+  const { aiEnabled } = useAiStatus();
   const [form, setForm] = useState(null);
   const [scores, setScores] = useState({});
   const [strengths, setStrengths] = useState("");
   const [improvements, setImprovements] = useState("");
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [bias, setBias] = useState(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     api.get(`/feedback/request/${requestId}`).then((d) => {
@@ -46,8 +54,20 @@ export default function FeedbackForm() {
         ratings: form.competencies.map((c) => ({ competencyId: c.id, score: scores[c.id] })),
         strengths, improvements,
       });
+      toast("Feedback submitted", "success");
       nav("/feedback");
     } catch (e) { setErr(e.message); setBusy(false); }
+  }
+
+  async function runBiasCheck() {
+    setChecking(true); setBias(null);
+    try {
+      const res = await api.post("/ai/bias-check", { strengths, improvements });
+      if (!res.aiEnabled) { toast("AI is not configured", "info"); return; }
+      setBias(res);
+      if (!res.flags?.length) toast("Looks clear — no issues flagged", "success");
+    } catch (e) { toast(e.message, "error"); }
+    finally { setChecking(false); }
   }
 
   const heading = form.reviewerRole === "SELF"
@@ -89,6 +109,38 @@ export default function FeedbackForm() {
         <label>Areas to improve
           <textarea value={improvements} onChange={(e) => setImprovements(e.target.value)} rows={3} placeholder="Where should they focus to grow?" />
         </label>
+
+        {aiEnabled && (
+          <div className="ai-actions">
+            <button className="btn ai" disabled={checking || (!strengths && !improvements)} onClick={runBiasCheck}>
+              {checking ? "Checking…" : "✦ Check before submit"}
+            </button>
+            <span className="ai-note">AI flags vague, non-actionable, or potentially biased wording. Advisory only.</span>
+          </div>
+        )}
+
+        {bias && (
+          <div>
+            <div className="spec-score">
+              <strong>Specificity</strong>
+              <span className={`score ${bias.specificityScore >= 4 ? "green" : bias.specificityScore >= 3 ? "amber" : "red"}`}>
+                {bias.specificityScore}<small>/5</small>
+              </span>
+              <span className="muted small">{bias.summary}</span>
+            </div>
+            {bias.flags?.length > 0 && (
+              <div className="bias-flags">
+                {bias.flags.map((f, i) => (
+                  <div key={i} className={`bias-flag ${f.type}`}>
+                    <div className="flag-type">{FLAG_LABEL[f.type] || f.type}</div>
+                    <div className="quote">“{f.quote}”</div>
+                    <div className="suggestion">{f.suggestion}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {err && <div className="error">{err}</div>}
