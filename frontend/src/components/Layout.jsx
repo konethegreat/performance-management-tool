@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import NotificationsBell from "./NotificationsBell.jsx";
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -13,6 +14,7 @@ export default function Layout() {
   if (user.role === "ATTORNEY" || user.role === "MANAGER") links.push(["/me", "My Performance"]);
   if (user.role === "CLIENT") links.push(["/client", "Client Portal"]);
   links.push(["/feedback", "Feedback I Owe"]);
+  if (user.role === "ADMIN") links.push(["/admin", "Admin"]);
 
   return (
     <div className="app">
@@ -29,6 +31,7 @@ export default function Layout() {
             <Link key={to} to={to} className={loc.pathname === to ? "active" : ""}>{label}</Link>
           ))}
         </nav>
+        <NotificationsBell />
         <div className="user-chip">
           <div className="user-meta">
             <strong>{user.firstName} {user.lastName}</strong>
