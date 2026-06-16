@@ -80,6 +80,7 @@ router.get("/:id", requireAuth, async (req, res) => {
     approvedAt: review.approvedAt,
     draftSummary: review.draftSummary,
     finalSummary: review.finalSummary,
+    aiDraftSummary: review.aiDraftSummary,
     overallScore: review.overallScore,
     goals: review.goals,
     events: review.events.map((e) => ({ id: e.id, action: e.action, note: e.note, at: e.createdAt, actor: `${e.actor.firstName} ${e.actor.lastName}` })),
