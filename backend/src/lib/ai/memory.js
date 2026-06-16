@@ -2,7 +2,7 @@
 // an attorney's APPROVED reports. Refreshed automatically when a report is
 // approved, and fed into the Report Draft Assistant so reviews build on history.
 
-import { z } from "zod";
+import { z } from "zod/v4"; // SDK's zodOutputFormat requires zod v4 schemas
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prisma } from "../prisma.js";
 import { client, model, logRun, aiEnabled } from "./client.js";

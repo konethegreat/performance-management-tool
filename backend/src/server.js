@@ -35,5 +35,10 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error", detail: err.message });
 });
 
+// Defence-in-depth: never let a stray async rejection take down the API.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Mostoeneng PMS API listening on http://localhost:${PORT}`));

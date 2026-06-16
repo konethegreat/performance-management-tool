@@ -2,7 +2,7 @@
 // clean, structured set of strengths / improvement bullets + themes. It only
 // restructures and lightly clarifies what was written — it never invents content.
 
-import { z } from "zod";
+import { z } from "zod/v4"; // SDK's zodOutputFormat requires zod v4 schemas
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { client, model, logRun } from "./client.js";
 

@@ -2,7 +2,7 @@
 // flags vague, non-actionable, or potentially-biased phrasing with concrete
 // rewrite suggestions. Advisory only — it never blocks submission.
 
-import { z } from "zod";
+import { z } from "zod/v4"; // SDK's zodOutputFormat requires zod v4 schemas
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { client, model, logRun } from "./client.js";
 

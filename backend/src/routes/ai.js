@@ -1,5 +1,7 @@
 // AI feature endpoints. Every route degrades gracefully when AI is not
-// configured (returns { aiEnabled: false } instead of erroring).
+// configured (returns { aiEnabled: false } instead of erroring), and every
+// handler is wrapped in `safe` so an AI/network failure returns a clean error
+// rather than crashing the process (Express 4 does not catch async rejections).
 
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
@@ -11,6 +13,14 @@ import { draftReport } from "../lib/ai/draftReport.js";
 import { refreshAttorneyMemory } from "../lib/ai/memory.js";
 
 const router = Router();
+
+// Catch async errors so a failed AI call returns 502 JSON instead of killing
+// the server. The frontend surfaces `error` as a toast.
+const safe = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch((e) => {
+    console.error("AI route error:", e?.message || e);
+    if (!res.headersSent) res.status(502).json({ error: "AI request failed", detail: e?.message || String(e) });
+  });
 
 function canSeeMemory(user, attorneyId, managerId) {
   return user.role === "ADMIN" || user.id === attorneyId || user.id === managerId;
@@ -28,7 +38,7 @@ router.get("/status", requireAuth, (_req, res) => {
 });
 
 // ── Review Organizer: structure one submitted feedback response ──
-router.post("/organize/:requestId", requireAuth, async (req, res) => {
+router.post("/organize/:requestId", requireAuth, safe(async (req, res) => {
   if (!aiEnabled()) return res.json({ aiEnabled: false });
   const request = await prisma.feedbackRequest.findUnique({
     where: { id: req.params.requestId },
@@ -55,20 +65,20 @@ router.post("/organize/:requestId", requireAuth, async (req, res) => {
     data: { organized: JSON.stringify(organized) },
   });
   res.json({ aiEnabled: true, organized });
-});
+}));
 
 // ── Bias & Quality Check: advisory review of draft feedback before submit ──
-router.post("/bias-check", requireAuth, async (req, res) => {
+router.post("/bias-check", requireAuth, safe(async (req, res) => {
   if (!aiEnabled()) return res.json({ aiEnabled: false });
   const { strengths, improvements } = req.body || {};
   if (!strengths && !improvements) return res.status(400).json({ error: "Nothing to check" });
   const result = await biasCheck({ strengths, improvements }, { actorId: req.user.id });
   if (!result) return res.json({ aiEnabled: false });
   res.json({ aiEnabled: true, ...result });
-});
+}));
 
 // ── Report Draft Assistant: AI-drafted narrative for the owning manager ──
-router.post("/reviews/:id/draft", requireAuth, async (req, res) => {
+router.post("/reviews/:id/draft", requireAuth, safe(async (req, res) => {
   if (!aiEnabled()) return res.json({ aiEnabled: false });
   const review = await prisma.performanceReview.findUnique({
     where: { id: req.params.id },
@@ -84,10 +94,10 @@ router.post("/reviews/:id/draft", requireAuth, async (req, res) => {
 
   await prisma.performanceReview.update({ where: { id: review.id }, data: { aiDraftSummary: text } });
   res.json({ aiEnabled: true, draft: text });
-});
+}));
 
 // ── Attorney Memory: read profile ──
-router.get("/attorneys/:id/memory", requireAuth, async (req, res) => {
+router.get("/attorneys/:id/memory", requireAuth, safe(async (req, res) => {
   const attorney = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!attorney) return res.status(404).json({ error: "Not found" });
   if (!canSeeMemory(req.user, attorney.id, attorney.managerId)) {
@@ -95,10 +105,10 @@ router.get("/attorneys/:id/memory", requireAuth, async (req, res) => {
   }
   const memory = await prisma.attorneyMemory.findUnique({ where: { attorneyId: attorney.id } });
   res.json({ aiEnabled: aiEnabled(), memory });
-});
+}));
 
 // ── Attorney Memory: regenerate on demand (admin, or the attorney's manager) ──
-router.post("/attorneys/:id/memory/refresh", requireAuth, async (req, res) => {
+router.post("/attorneys/:id/memory/refresh", requireAuth, safe(async (req, res) => {
   if (!aiEnabled()) return res.json({ aiEnabled: false });
   const attorney = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!attorney) return res.status(404).json({ error: "Not found" });
@@ -108,6 +118,6 @@ router.post("/attorneys/:id/memory/refresh", requireAuth, async (req, res) => {
   }
   const memory = await refreshAttorneyMemory(attorney.id, { actorId: req.user.id });
   res.json({ aiEnabled: true, memory });
-});
+}));
 
 export default router;
