@@ -8,6 +8,7 @@ import ClientPortal from "./pages/ClientPortal.jsx";
 import ReviewDetail from "./pages/ReviewDetail.jsx";
 import FeedbackForm from "./pages/FeedbackForm.jsx";
 import MyFeedback from "./pages/MyFeedback.jsx";
+import Admin from "./pages/Admin.jsx";
 
 // Sends each role to its home dashboard
 function Home() {
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/feedback" element={<Protected><MyFeedback /></Protected>} />
         <Route path="/feedback/:requestId" element={<Protected><FeedbackForm /></Protected>} />
         <Route path="/reviews/:id" element={<Protected><ReviewDetail /></Protected>} />
+        <Route path="/admin" element={<Protected roles={["ADMIN"]}><Admin /></Protected>} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

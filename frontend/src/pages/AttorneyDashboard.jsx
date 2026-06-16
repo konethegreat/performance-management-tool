@@ -1,17 +1,36 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import { Stat, StatusPill, ScoreBadge, Bar } from "../components/ui.jsx";
+import { useToast } from "../components/Toast.jsx";
+import AnnualReport from "../pdf/AnnualReport.jsx";
+import { downloadPdf } from "../pdf/download.js";
 
 export default function AttorneyDashboard() {
+  const { user } = useAuth();
+  const toast = useToast();
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
   const [launching, setLaunching] = useState(null);
+  const [rollup, setRollup] = useState(null);
 
   function load() {
     api.get("/dashboard/attorney").then(setData).catch((e) => setErr(e.message));
   }
   useEffect(load, []);
+
+  // Pull the most recent annual rollup (if any) for PDF export.
+  useEffect(() => {
+    if (!user?.id) return;
+    api.get("/cycles").then((cycles) => {
+      const annual = (cycles || []).find((c) => c.type === "ANNUAL");
+      if (!annual) return;
+      api.get(`/dashboard/rollup/${user.id}/${annual.id}`)
+        .then((r) => { if (r.quartersComplete > 0 || r.annualScore != null) setRollup(r); })
+        .catch(() => {});
+    }).catch(() => {});
+  }, [user?.id]);
 
   async function launch(cycleId) {
     setLaunching(cycleId); setErr(null);
@@ -57,6 +76,21 @@ export default function AttorneyDashboard() {
                 <strong>{t.score.toFixed(1)}</strong>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {rollup && (
+        <div className="card">
+          <div className="card-head">
+            <div><h2>Annual rollup — {rollup.annualCycle}</h2><small>{rollup.quartersComplete}/{rollup.quartersTotal} quarters approved</small></div>
+            <div className="detail-head-right">
+              <ScoreBadge score={rollup.annualScore} />
+              <button className="btn small" onClick={async () => {
+                try { await downloadPdf(<AnnualReport rollup={rollup} attorneyName={`${user.firstName} ${user.lastName}`} />, `annual-${rollup.annualCycle}.pdf`); }
+                catch (e) { toast(e.message, "error"); }
+              }}>Download PDF</button>
+            </div>
           </div>
         </div>
       )}

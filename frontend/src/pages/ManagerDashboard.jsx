@@ -2,23 +2,39 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { Stat, StatusPill, ScoreBadge } from "../components/ui.jsx";
+import { SkeletonCard } from "../components/Skeleton.jsx";
+import { useToast } from "../components/Toast.jsx";
+import TeamSnapshot from "../pdf/TeamSnapshot.jsx";
+import { downloadPdf } from "../pdf/download.js";
 
 export default function ManagerDashboard() {
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
+  const toast = useToast();
 
   useEffect(() => {
     api.get("/dashboard/manager").then(setData).catch((e) => setErr(e.message));
   }, []);
 
   if (err) return <div className="error">{err}</div>;
-  if (!data) return <div className="loading">Loading team…</div>;
+  if (!data) return <div className="grid-2"><SkeletonCard /><SkeletonCard /></div>;
 
   const s = data.summary;
+  async function exportPdf() {
+    try { await downloadPdf(<TeamSnapshot summary={s} rows={data.reviews} />, "team-snapshot.pdf"); }
+    catch (e) { toast(e.message, "error"); }
+  }
   return (
     <div>
       <h1>Team Performance</h1>
       <p className="subtitle">Every review you own, with live completion and cycle-time tracking from the launch button.</p>
+
+      {s.overdueCount > 0 && (
+        <div className="sla-banner">
+          <span>⚠</span>
+          <div><strong>{s.overdueCount} review{s.overdueCount > 1 ? "s" : ""} past SLA.</strong> Nudge reviewers or follow up — cycle time is tracked from the launch date.</div>
+        </div>
+      )}
 
       <div className="stat-grid">
         <Stat label="Active reviews" value={s.reviewCount} />
@@ -29,7 +45,10 @@ export default function ManagerDashboard() {
       </div>
 
       <div className="card">
-        <div className="card-head"><h2>Reviews</h2></div>
+        <div className="card-head">
+          <h2>Reviews</h2>
+          {data.reviews.length > 0 && <button className="btn small" onClick={exportPdf}>Export PDF</button>}
+        </div>
         <table className="table">
           <thead>
             <tr><th>Attorney</th><th>Cycle</th><th>Status</th><th>Completion</th><th>Elapsed</th><th>Score</th><th></th></tr>

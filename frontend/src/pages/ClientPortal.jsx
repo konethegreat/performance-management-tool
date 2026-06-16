@@ -3,16 +3,27 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { StatusPill } from "../components/ui.jsx";
+import { useToast } from "../components/Toast.jsx";
+import ClientFeedback from "../pdf/ClientFeedback.jsx";
+import { downloadPdf } from "../pdf/download.js";
 
 // The external client's view: only the feedback they've been asked to give.
 export default function ClientPortal() {
   const { user } = useAuth();
+  const toast = useToast();
   const [items, setItems] = useState(null);
   const [err, setErr] = useState(null);
 
   useEffect(() => {
     api.get("/feedback/mine").then(setItems).catch((e) => setErr(e.message));
   }, []);
+
+  async function downloadFeedback(requestId, name) {
+    try {
+      const data = await api.get(`/feedback/request/${requestId}`);
+      await downloadPdf(<ClientFeedback request={data} />, `feedback-${name}.pdf`);
+    } catch (e) { toast(e.message, "error"); }
+  }
 
   if (err) return <div className="error">{err}</div>;
   if (!items) return <div className="loading">Loading…</div>;
@@ -49,6 +60,7 @@ export default function ClientPortal() {
               <div><strong>{i.subject.name}</strong><small>{i.cycle.name}</small></div>
               <div className="feedback-row-actions">
                 <StatusPill status="SUBMITTED" />
+                <button className="btn small" onClick={() => downloadFeedback(i.id, i.subject.name)}>Download PDF</button>
                 <Link className="btn small" to={`/feedback/${i.id}`}>Edit</Link>
               </div>
             </div>
