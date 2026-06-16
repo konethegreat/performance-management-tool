@@ -30,3 +30,6 @@ backend/prisma/migrations/dev.db*
 
 # ── superpowers brainstorm scratch ──
 .superpowers/
+
+# ── design scratch / mockups ──
+docs/mockups/
