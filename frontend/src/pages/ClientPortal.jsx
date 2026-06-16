@@ -4,6 +4,7 @@ import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { StatusPill } from "../components/ui.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import ClientFeedback from "../pdf/ClientFeedback.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -32,6 +33,7 @@ export default function ClientPortal() {
 
   return (
     <div>
+      <OverviewHeader />
       <h1>Client feedback portal</h1>
       <p className="subtitle">
         Welcome{user?.clientAccount ? `, ${user.clientAccount}` : ""}. The attorneys who served you have requested

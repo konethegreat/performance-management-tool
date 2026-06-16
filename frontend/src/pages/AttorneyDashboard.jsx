@@ -4,6 +4,7 @@ import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Stat, StatusPill, ScoreBadge, Bar } from "../components/ui.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import AnnualReport from "../pdf/AnnualReport.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -46,6 +47,7 @@ export default function AttorneyDashboard() {
 
   return (
     <div>
+      <OverviewHeader />
       <h1>My Performance</h1>
       <p className="subtitle">Launch a review to start collecting 360° feedback. You'll see your full results once your manager approves the report.</p>
 

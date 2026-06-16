@@ -844,6 +844,21 @@ textarea { resize: vertical; min-height: 96px; }
   border-radius: var(--r-pill);
   padding: 2px 9px;
 }
+/* Overview greeting card (Zoho-style home header) */
+.overview-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--brass);
+  border-radius: var(--r-lg); padding: 22px 26px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.oh-left { display: flex; align-items: center; gap: 16px; }
+.oh-left h1 { margin: 0; font-size: clamp(1.4rem, 2vw, 1.7rem); }
+.oh-quote { margin: 5px 0 0; color: var(--ink-2); font-family: var(--serif); font-style: italic; max-width: 64ch; line-height: 1.45; }
+.oh-right { text-align: right; min-width: 140px; }
+.oh-weather { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+.oh-temp { font-family: var(--serif); font-size: 1.7rem; color: var(--ink); line-height: 1; }
+.oh-date { color: var(--muted); font-size: 0.85rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) { .oh-right { text-align: left; } .oh-weather { justify-content: flex-start; } }
+
 /* Avatars (DiceBear + monogram fallback) */
 .avatar { border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle; background: var(--surface-2); flex-shrink: 0; }
 .avatar-fallback { display: inline-grid; place-items: center; background: var(--ink); color: var(--brass-soft); font-family: var(--serif); font-weight: 600; line-height: 1; }
