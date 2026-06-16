@@ -2,6 +2,7 @@ import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import NotificationsBell from "./NotificationsBell.jsx";
 import { AiStatusChip } from "./AiStatusChip.jsx";
+import { Avatar } from "./Avatar.jsx";
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -35,6 +36,7 @@ export default function Layout() {
         <AiStatusChip />
         <NotificationsBell />
         <div className="user-chip">
+          <Avatar seed={user.id} name={`${user.firstName} ${user.lastName}`} size={36} />
           <div className="user-meta">
             <strong>{user.firstName} {user.lastName}</strong>
             <small>{user.title || user.role}</small>

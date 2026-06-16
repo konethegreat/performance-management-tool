@@ -844,6 +844,11 @@ textarea { resize: vertical; min-height: 96px; }
   border-radius: var(--r-pill);
   padding: 2px 9px;
 }
+/* Avatars (DiceBear + monogram fallback) */
+.avatar { border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle; background: var(--surface-2); flex-shrink: 0; }
+.avatar-fallback { display: inline-grid; place-items: center; background: var(--ink); color: var(--brass-soft); font-family: var(--serif); font-weight: 600; line-height: 1; }
+.cell-user { display: flex; align-items: center; gap: 10px; }
+
 /* Top-bar AI status chip */
 .ai-chip {
   display: inline-flex; align-items: center; gap: 5px;

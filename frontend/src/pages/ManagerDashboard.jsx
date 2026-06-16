@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { Stat, StatusPill, ScoreBadge } from "../components/ui.jsx";
 import { SkeletonCard } from "../components/Skeleton.jsx";
+import { Avatar } from "../components/Avatar.jsx";
 import { useToast } from "../components/Toast.jsx";
 import TeamSnapshot from "../pdf/TeamSnapshot.jsx";
 import { downloadPdf } from "../pdf/download.js";
@@ -56,7 +57,12 @@ export default function ManagerDashboard() {
           <tbody>
             {data.reviews.map((r) => (
               <tr key={r.reviewId} className={r.overdue ? "row-warn" : ""}>
-                <td><strong>{r.subject}</strong><br /><small>{r.title}</small></td>
+                <td>
+                  <div className="cell-user">
+                    <Avatar name={r.subject} size={32} />
+                    <span><strong>{r.subject}</strong><br /><small>{r.title}</small></span>
+                  </div>
+                </td>
                 <td>{r.cycle}</td>
                 <td><StatusPill status={r.status} /></td>
                 <td>

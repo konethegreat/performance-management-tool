@@ -6,6 +6,7 @@ import { StatusPill, ScoreBadge, Bar, Stat, sourceLabel } from "../components/ui
 import { useToast } from "../components/Toast.jsx";
 import { useAiStatus } from "../hooks/useAiStatus.js";
 import { AiBadge } from "../components/AiBadge.jsx";
+import { Avatar } from "../components/Avatar.jsx";
 import ReviewReport from "../pdf/ReviewReport.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -136,7 +137,12 @@ export default function ReviewDetail() {
               {r.requests.map((q) => (
                 <tr key={q.id}>
                   <td><span className="pill grey">{sourceLabel[q.reviewerRole]}</span></td>
-                  <td>{q.reviewer.name}</td>
+                  <td>
+                    <div className="cell-user">
+                      <Avatar seed={q.reviewer.id} name={q.reviewer.name} size={28} />
+                      {q.reviewer.name}
+                    </div>
+                  </td>
                   <td><StatusPill status={q.status} /></td>
                   <td>
                     {aiEnabled && isManager && q.submitted && (
