@@ -5,6 +5,7 @@ import { Stat, StatusPill, ScoreBadge } from "../components/ui.jsx";
 import { SkeletonCard } from "../components/Skeleton.jsx";
 import { Avatar } from "../components/Avatar.jsx";
 import { OverviewHeader } from "../components/OverviewHeader.jsx";
+import { WeekSchedule } from "../components/WeekSchedule.jsx";
 import { useToast } from "../components/Toast.jsx";
 import TeamSnapshot from "../pdf/TeamSnapshot.jsx";
 import { downloadPdf } from "../pdf/download.js";
@@ -29,6 +30,7 @@ export default function ManagerDashboard() {
   return (
     <div>
       <OverviewHeader />
+      <WeekSchedule />
       <h1>Team Performance</h1>
       <p className="subtitle">Every review you own, with live completion and cycle-time tracking from the launch button.</p>
 

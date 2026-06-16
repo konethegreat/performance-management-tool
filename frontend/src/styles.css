@@ -844,6 +844,21 @@ textarea { resize: vertical; min-height: 96px; }
   border-radius: var(--r-pill);
   padding: 2px 9px;
 }
+/* Week schedule strip (Zoho-style "This week") */
+.week-strip { display: flex; gap: 8px; }
+.week-day {
+  flex: 1; min-width: 0; text-align: center; padding: 12px 6px;
+  border: 1px solid var(--line); border-radius: var(--r); background: var(--card);
+}
+.week-day.today { border-color: var(--brass); background: var(--brass-soft); }
+.wd-dow { display: block; font-size: 0.72rem; color: var(--muted); }
+.wd-num { display: block; font-family: var(--serif); font-size: 1.3rem; line-height: 1.1; margin: 2px 0 6px; }
+.wd-tag { display: block; font-size: 0.66rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wd-tag.weekend { color: var(--muted-2); }
+.wd-tag.holiday { color: var(--garnet); font-weight: 500; }
+.wd-tag.work { color: var(--forest); }
+@media (max-width: 640px) { .week-strip { flex-wrap: wrap; } .week-day { flex: 1 1 56px; } }
+
 /* Overview greeting card (Zoho-style home header) */
 .overview-header {
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
