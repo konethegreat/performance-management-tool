@@ -78,8 +78,15 @@ Seeded logins, password `Password123!` for all:
 - **Schema changes use `prisma db push`, not `prisma migrate`.** There is no migration
   history. After editing `backend/prisma/schema.prisma`, run `npm run db:push` (or
   `npm run db:reset` to wipe + reseed). Adopt `prisma migrate` only if asked.
-- **No test suite exists.** "Verification" today = `node --check` on backend files and the
-  Vite bundle building cleanly. Don't claim tests pass.
+- **No test suite exists.** "Verification" today = `node --check` on backend files, the Vite
+  bundle building cleanly, and a live smoke: boot the backend, log in as a seeded user
+  (e.g. `t.dlamini@mostoeneng.law` / `Password123!`) for a JWT, then `curl` the endpoint
+  (the local DB is seeded). For import-resolution use
+  `node --input-type=module -e "await import('./src/routes/x.js')"`. Don't claim tests pass.
+- **Windows dev gotcha:** the backend binds `:4000` and only one instance can. Git Bash
+  `kill`/`pkill` do **not** reliably stop a backgrounded `node` on Windows (this caused
+  `EADDRINUSE` for the user). Free the port with PowerShell:
+  `Get-NetTCPConnection -LocalPort 4000 -State Listen | %{ Stop-Process -Id $_.OwningProcess -Force }`.
 - **Secrets:** `.env` files are gitignored (see `.gitignore`, hardened to exclude all
   `.env*` except `.env.example`). Never commit real `DATABASE_URL` / `JWT_SECRET`.
 

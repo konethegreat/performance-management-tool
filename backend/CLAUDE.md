@@ -82,6 +82,16 @@ src/routes/activity.js      GET / — role-scoped recent ReportEvents (clients: 
   "@anthropic-ai/sdk/helpers/zod"` (single arg), `client.messages.parse({ output_config:
   { format: zodOutputFormat(Schema) } })`, result on `res.parsed_output`. Drafting uses
   `client.messages.stream(...).finalMessage()`. Default model `claude-opus-4-8`.
+- **⚠️ Zod must be v4 for the SDK helper:** schemas MUST be `import { z } from "zod/v4"`,
+  NOT `"zod"`. Installed `zod` is 3.25.x (ships a `/v4` subpath); the SDK helper does
+  `require("zod/v4")` and needs v4 schemas — importing from `"zod"` gives v3 schemas and
+  **crashes the process** on the AI call (`schema._zod` undefined). This already bit us once.
+- **AI routes must not crash the server.** Handlers in `ai.js` are wrapped in `safe()` and
+  `server.js` has an `unhandledRejection` guard — Express 4 does NOT catch async rejections,
+  so an unguarded AI/network throw kills the whole API (and cascades to ECONNREFUSED on every
+  other route). Wrap any new AI route the same way.
+- **Live AI calls hit the real `ANTHROPIC_API_KEY` in `.env` (costs money).** Develop against
+  the `{ aiEnabled:false }` fallback and smoke real calls sparingly.
 - **Authorization:** AI routes keep the two-layer model. Memory refresh is scoped to ADMIN
   or the attorney's owning manager (not any manager) — see the IDOR fix.
 - **Approve hook:** the `transition()` factory dynamically imports `memory.js` and fires
