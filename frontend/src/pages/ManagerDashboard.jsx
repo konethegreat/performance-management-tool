@@ -6,6 +6,7 @@ import { SkeletonCard } from "../components/Skeleton.jsx";
 import { Avatar } from "../components/Avatar.jsx";
 import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import { WeekSchedule } from "../components/WeekSchedule.jsx";
+import { ActivityFeed } from "../components/ActivityFeed.jsx";
 import { useToast } from "../components/Toast.jsx";
 import TeamSnapshot from "../pdf/TeamSnapshot.jsx";
 import { downloadPdf } from "../pdf/download.js";
@@ -82,6 +83,8 @@ export default function ManagerDashboard() {
           </tbody>
         </table>
       </div>
+
+      <ActivityFeed />
     </div>
   );
 }

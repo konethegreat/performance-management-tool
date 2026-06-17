@@ -12,6 +12,7 @@ import dashboardRoutes from "./routes/dashboard.js";
 import aiRoutes from "./routes/ai.js";
 import notificationRoutes from "./routes/notifications.js";
 import widgetRoutes from "./routes/widgets.js";
+import activityRoutes from "./routes/activity.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/widgets", widgetRoutes);
+app.use("/api/activity", activityRoutes);
 
 // Fallthrough error handler
 app.use((err, _req, res, _next) => {

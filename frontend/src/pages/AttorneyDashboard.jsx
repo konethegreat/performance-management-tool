@@ -6,6 +6,7 @@ import { Stat, StatusPill, ScoreBadge, Bar } from "../components/ui.jsx";
 import { useToast } from "../components/Toast.jsx";
 import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import { WeekSchedule } from "../components/WeekSchedule.jsx";
+import { ActivityFeed } from "../components/ActivityFeed.jsx";
 import AnnualReport from "../pdf/AnnualReport.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -130,6 +131,8 @@ export default function AttorneyDashboard() {
         ))}
         {data.cards.length === 0 && <p className="muted">No reviews yet — launch one above.</p>}
       </div>
+
+      <ActivityFeed />
     </div>
   );
 }

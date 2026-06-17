@@ -844,6 +844,13 @@ textarea { resize: vertical; min-height: 96px; }
   border-radius: var(--r-pill);
   padding: 2px 9px;
 }
+/* Recent activity feed (Zoho-style) */
+.activity-item { display: flex; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--line); color: var(--ink); align-items: flex-start; border-radius: var(--r); }
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: var(--surface-2); }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); margin-top: 6px; flex-shrink: 0; }
+.activity-item small { display: block; color: var(--muted); font-size: 0.74rem; font-family: var(--mono); margin-top: 2px; }
+
 /* Week schedule strip (Zoho-style "This week") */
 .week-strip { display: flex; gap: 8px; }
 .week-day {
