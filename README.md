@@ -136,6 +136,27 @@ In-app notifications fire when feedback is requested (on launch) and when a revi
 state; managers also see an SLA nudge banner for overdue reviews. The bell in the top bar
 shows unread count.
 
+## Home overview & widgets
+
+A Zoho-style overview greets each user: a time-of-day greeting card with a daily quote and
+live office weather, a "This week" schedule strip marking weekends and public holidays, a
+recent-activity feed, and generated avatars throughout. These use free public APIs
+(ZenQuotes, Open-Meteo, Nager.Date, DiceBear) — but for POPIA safety:
+
+- Quote/weather/holidays are **proxied server-side** (`/api/widgets/*`), cached, and degrade
+  gracefully if an upstream is down — third parties never see individual users.
+- Avatar seeds are **SHA-256-hashed** before reaching DiceBear, so no name/id is transmitted.
+
+Configure the office location and holiday country in `backend/.env`:
+
+```
+HOLIDAY_COUNTRY="ZA"           # ISO country code (Nager.Date)
+OFFICE_LAT="-26.2041"          # weather location (Open-Meteo) — default Johannesburg
+OFFICE_LON="28.0473"
+```
+
+The top bar also shows an **AI status chip** indicating whether AI is active and which model.
+
 ---
 
 See `docs/ARCHITECTURE.md` and `docs/DATA_MODEL.md` for the full design.

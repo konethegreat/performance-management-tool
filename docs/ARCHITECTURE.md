@@ -106,6 +106,19 @@ downloadable files, no backend headless browser. Four branded "Counsel" template
 review report, annual rollup, client feedback summary, and manager team snapshot. The
 `download.js` helper produces a blob on click after any needed data fetch.
 
+## Home widgets & external APIs
+
+The Zoho-style overview (greeting card, "This week" strip, activity feed, avatars) is fed by:
+- `routes/widgets.js` — server-side proxies for a daily quote (ZenQuotes), office weather
+  (Open-Meteo), and public holidays (Nager.Date). All cached in-memory, all degrade to a
+  local fallback / empty array on upstream failure. Proxying keeps third parties from seeing
+  individual user IPs/usage (POPIA) and centralizes caching.
+- `routes/activity.js` — a role-scoped recent-activity feed from `ReportEvent` (clients get
+  their notifications instead).
+- Avatars (`frontend/src/components/Avatar.jsx`) use DiceBear but **hash the seed
+  (SHA-256 + salt) client-side first**, so no name or id is sent to the third party; a local
+  monogram is the fallback.
+
 ## What a production hardening pass would add
 
 This is a faithful, runnable v1. Before going live a firm would want:

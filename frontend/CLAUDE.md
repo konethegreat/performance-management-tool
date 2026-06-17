@@ -73,6 +73,17 @@ src/styles.css            All styling (class-based; pill/score/bar tones live he
   react-pdf is heavy and lands in the main bundle (the 500 kB build warning is expected).
 - **Admin** (`pages/Admin.jsx`, route `/admin`, ADMIN-only) manages cycles + views competencies.
 
+## Home overview widgets (Zoho-style)
+
+- `components/OverviewHeader.jsx` (greeting + daily quote + weather), `WeekSchedule.jsx`
+  (week strip with weekends/holidays), `ActivityFeed.jsx` (recent events), and `Avatar.jsx`
+  compose the home overview on the role dashboards. Data comes from `/api/widgets/*` and
+  `/api/activity` (cached/proxied server-side).
+- `AiStatusChip.jsx` (top bar) shows whether AI is active and which model, via `useAiStatus()`.
+- **`Avatar.jsx` hashes its seed (SHA-256 + salt) before calling DiceBear** — never pass a raw
+  name/id expecting it to be sent in the clear; the hash keeps PII off the third party (POPIA),
+  with a monogram fallback when offline.
+
 ## Mind the backend visibility rules
 
 The server hides an attorney's scores, competency breakdown, and final summary until the

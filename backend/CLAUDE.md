@@ -68,7 +68,13 @@ src/lib/ai/memory.js        refreshAttorneyMemory(attorneyId) — longitudinal p
 src/routes/ai.js            /status, /organize/:id, /bias-check, /reviews/:id/draft, /attorneys/:id/memory[/refresh]
 src/lib/notify.js           notify()/notifyMany() → Notification rows (best-effort)
 src/routes/notifications.js GET /, POST /:id/read, POST /read-all
+src/routes/widgets.js       GET /greeting (quote+weather), /holidays — server-side proxy of free
+                            public APIs (ZenQuotes/Open-Meteo/Nager.Date), in-memory cached, resilient
+src/routes/activity.js      GET / — role-scoped recent ReportEvents (clients: their notifications)
 ```
+
+- **External APIs are proxied, not called from the browser** (POPIA): widgets cache results and
+  fall back gracefully. Office location / holiday country come from `OFFICE_LAT/OFFICE_LON/HOLIDAY_COUNTRY`.
 
 - **Graceful-fallback contract:** every AI route returns `{ aiEnabled: false }` (200) when
   `aiEnabled()` is false — do not throw. Replicate this in any new AI endpoint.
