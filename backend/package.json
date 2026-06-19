@@ -10,7 +10,8 @@
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
-    "db:reset": "prisma db push --force-reset && node prisma/seed.js"
+    "db:reset": "prisma db push --force-reset && node prisma/seed.js",
+    "reminders": "node scripts/reminders.js"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
