@@ -30,13 +30,14 @@ ${strengths || "(none)"}
 AREAS TO IMPROVE:
 ${improvements || "(none)"}`;
 
+  const m = model("fast"); // Haiku — fast, cheap quality/bias classification
   const res = await c.messages.parse({
-    model: model(),
+    model: m,
     max_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
     output_config: { format: zodOutputFormat(Schema) },
   });
 
-  await logRun({ kind: "BIAS_CHECK", refId, actorId, usage: res.usage });
+  await logRun({ kind: "BIAS_CHECK", refId, actorId, usage: res.usage, model: m });
   return res.parsed_output ?? res.parsed ?? null;
 }

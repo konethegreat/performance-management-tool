@@ -33,8 +33,9 @@ export async function refreshAttorneyMemory(attorneyId, { actorId } = {}) {
     .map((r) => `${r.cycle.name}: score ${r.overallScore ?? "-"}/5\n  ${r.finalSummary || "(no summary)"}`)
     .join("\n\n");
 
+  const mdl = model("deep"); // Opus — longitudinal profile synthesis
   const res = await c.messages.parse({
-    model: model(),
+    model: mdl,
     max_tokens: 1200,
     thinking: { type: "adaptive" },
     messages: [
@@ -49,7 +50,7 @@ ${history}`,
     output_config: { format: zodOutputFormat(Schema) },
   });
 
-  await logRun({ kind: "MEMORY", refId: attorneyId, actorId, usage: res.usage });
+  await logRun({ kind: "MEMORY", refId: attorneyId, actorId, usage: res.usage, model: mdl });
   const m = res.parsed_output ?? res.parsed ?? null;
   if (!m) return null;
 

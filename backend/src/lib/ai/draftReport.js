@@ -30,8 +30,9 @@ ${mem}
 360 FEEDBACK:
 ${fb || "(no feedback submitted yet)"}`;
 
+  const m = model("deep"); // Opus — high-stakes narrative synthesis
   const stream = c.messages.stream({
-    model: model(),
+    model: m,
     max_tokens: 2000,
     thinking: { type: "adaptive" },
     messages: [{ role: "user", content: prompt }],
@@ -43,6 +44,6 @@ ${fb || "(no feedback submitted yet)"}`;
     .join("")
     .trim();
 
-  await logRun({ kind: "DRAFT", refId: review.id, actorId, usage: final.usage });
+  await logRun({ kind: "DRAFT", refId: review.id, actorId, usage: final.usage, model: m });
   return text;
 }

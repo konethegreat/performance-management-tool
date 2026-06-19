@@ -32,13 +32,14 @@ ${raw.strengths || "(none provided)"}
 AREAS TO IMPROVE (free text):
 ${raw.improvements || "(none provided)"}`;
 
+  const m = model("balanced"); // Sonnet — structured restructuring + theming
   const res = await c.messages.parse({
-    model: model(),
+    model: m,
     max_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
     output_config: { format: zodOutputFormat(Schema) },
   });
 
-  await logRun({ kind: "ORGANIZE", refId, actorId, usage: res.usage });
+  await logRun({ kind: "ORGANIZE", refId, actorId, usage: res.usage, model: m });
   return res.parsed_output ?? res.parsed ?? null;
 }
