@@ -112,6 +112,116 @@ router.get("/rollup/:attorneyId/:annualCycleId", requireAuth, async (req, res) =
   });
 });
 
+// ── Department (practice group) KPIs: which teams are working effectively ──
+router.get("/departments", requireAuth, async (req, res) => {
+  if (!["MANAGER", "ADMIN"].includes(req.user.role)) return res.status(403).json({ error: "Forbidden" });
+
+  const groups = await prisma.practiceGroup.findMany({
+    include: { head: true, members: { where: { active: true } } },
+    orderBy: { name: "asc" },
+  });
+
+  // All reviews with enough nesting to derive completion, cycle time, and
+  // source-weighted competency averages for approved work.
+  const reviews = await prisma.performanceReview.findMany({
+    include: {
+      subject: true,
+      cycle: true,
+      requests: { include: { response: { include: { ratings: { include: { competency: true } } } } } },
+    },
+  });
+
+  const byGroup = new Map(); // groupId -> reviews[]
+  for (const r of reviews) {
+    const gid = r.subject.practiceGroupId;
+    if (!gid) continue;
+    if (!byGroup.has(gid)) byGroup.set(gid, []);
+    byGroup.get(gid).push(r);
+  }
+
+  const rows = groups.map((g) => {
+    const grp = byGroup.get(g.id) || [];
+    const approved = grp.filter((r) => r.status === "APPROVED");
+
+    let totalReq = 0, totalSub = 0, overdue = 0;
+    const cycleDays = [];
+    const statusCounts = {};
+    const approvedResponses = [];
+    for (const r of grp) {
+      const comp = completionRate(r.requests);
+      totalReq += comp.total; totalSub += comp.submitted;
+      const ct = cycleTime(r, r.cycle.slaDays);
+      if (ct.overdue) overdue += 1;
+      if (ct.completed) cycleDays.push(ct.elapsedDays);
+      statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
+    }
+    for (const r of approved) {
+      for (const q of r.requests) if (q.response) approvedResponses.push(q.response);
+    }
+
+    const scores = approved.map((r) => r.overallScore).filter((s) => s != null);
+    const comp = competencyBreakdown(approvedResponses)
+      .filter((c) => c.average != null)
+      .sort((a, b) => b.average - a.average);
+
+    return {
+      groupId: g.id,
+      name: g.name,
+      head: g.head ? `${g.head.firstName} ${g.head.lastName}` : null,
+      memberCount: g.members.length,
+      reviewCount: grp.length,
+      approvedCount: approved.length,
+      avgScore: scores.length ? Math.round(avg(scores) * 100) / 100 : null,
+      completionPct: totalReq ? Math.round((totalSub / totalReq) * 100) : 0,
+      overdueCount: overdue,
+      avgCycleDays: cycleDays.length ? Math.round(avg(cycleDays)) : null,
+      statusCounts,
+      strengths: comp.slice(0, 3),
+      improvements: comp.slice(-3).reverse(),
+    };
+  });
+
+  // Rank by effectiveness: avg score first, then completion. Unscored groups last.
+  rows.sort((a, b) => {
+    if ((b.avgScore ?? -1) !== (a.avgScore ?? -1)) return (b.avgScore ?? -1) - (a.avgScore ?? -1);
+    return b.completionPct - a.completionPct;
+  });
+
+  const allScores = rows.map((r) => r.avgScore).filter((s) => s != null);
+  res.json({
+    summary: {
+      groupCount: rows.length,
+      peopleCount: rows.reduce((n, r) => n + r.memberCount, 0),
+      reviewCount: rows.reduce((n, r) => n + r.reviewCount, 0),
+      avgScore: allScores.length ? Math.round(avg(allScores) * 100) / 100 : null,
+      overdueCount: rows.reduce((n, r) => n + r.overdueCount, 0),
+    },
+    departments: rows,
+  });
+});
+
+// ── Firm-wide trends: per-cycle avg approved score + feedback completion over time ──
+router.get("/trends", requireAuth, async (req, res) => {
+  if (!["MANAGER", "ADMIN"].includes(req.user.role)) return res.status(403).json({ error: "Forbidden" });
+  const cycles = await prisma.reviewCycle.findMany({
+    where: { type: "QUARTERLY" },
+    orderBy: { periodStart: "asc" },
+    include: { reviews: { include: { requests: true } } },
+  });
+  const trends = cycles.map((c) => {
+    const reqs = c.reviews.flatMap((r) => r.requests);
+    const scores = c.reviews.filter((r) => r.status === "APPROVED" && r.overallScore != null).map((r) => r.overallScore);
+    return {
+      cycleId: c.id, cycle: c.name,
+      avgScore: scores.length ? Math.round(avg(scores) * 100) / 100 : null,
+      completionPct: completionRate(reqs).pct,
+      reviewCount: c.reviews.length,
+      approved: c.reviews.filter((r) => r.status === "APPROVED").length,
+    };
+  });
+  res.json({ trends });
+});
+
 function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
 
 export default router;

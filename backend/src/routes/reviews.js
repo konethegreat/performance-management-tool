@@ -165,6 +165,16 @@ async function build360(attorney) {
   const subs = await prisma.user.findMany({ where: { managerId: attorney.id, active: true }, take: 3 });
   subs.forEach((s) => list.push({ reviewerId: s.id, role: "SUBORDINATE" }));
 
+  // Support staff: same practice group — they rate social/soft dimensions only
+  // (enforced in the feedback route). Capped like peers to keep the 360 focused.
+  if (attorney.practiceGroupId) {
+    const support = await prisma.user.findMany({
+      where: { practiceGroupId: attorney.practiceGroupId, role: "SUPPORT", id: { not: attorney.id }, active: true },
+      take: 2,
+    });
+    support.forEach((s) => list.push({ reviewerId: s.id, role: "SUPPORT" }));
+  }
+
   // Client: one active client (in a real deployment, matched to the attorney's matters)
   const client = await prisma.user.findFirst({ where: { role: "CLIENT", active: true } });
   if (client) list.push({ reviewerId: client.id, role: "CLIENT" });

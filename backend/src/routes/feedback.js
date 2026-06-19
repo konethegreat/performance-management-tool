@@ -1,11 +1,22 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
+import { capabilitiesForUser } from "../lib/positions.js";
+import { isSocialCompetency, socialCategoryWhere } from "../lib/competencies.js";
 
 const router = Router();
 
 // Default per-source confidence weights applied when feedback is submitted.
-const SOURCE_WEIGHT = { SELF: 0.8, MANAGER: 1.5, PEER: 1.0, SUBORDINATE: 1.0, CLIENT: 0.9 };
+// SUPPORT (social/soft raters) count a little below a peer for the dimensions
+// they do rate — tunable, see project open question on weight configurability.
+const SOURCE_WEIGHT = { SELF: 0.8, MANAGER: 1.5, PEER: 1.0, SUBORDINATE: 1.0, SUPPORT: 0.7, CLIENT: 0.9 };
+
+// requireAuth only carries { id, role, email } — load the user's position so we
+// can resolve capabilities (chiefly: are they a social/soft-only rater?).
+async function raterCapabilities(userId) {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, position: true } });
+  return u ? capabilitiesForUser(u) : null;
+}
 
 // ── Feedback I owe (any role, incl. self-review & client portal) ──
 router.get("/mine", requireAuth, async (req, res) => {
@@ -41,12 +52,20 @@ router.get("/request/:id", requireAuth, async (req, res) => {
   if (!request) return res.status(404).json({ error: "Not found" });
   if (request.reviewerId !== req.user.id) return res.status(403).json({ error: "Not your feedback request" });
 
-  const competencies = await prisma.competency.findMany({ where: { active: true }, orderBy: { order: "asc" } });
+  // Social/soft raters (support staff) only see — and may only rate — the
+  // social competencies; everyone else gets the full framework.
+  const caps = await raterCapabilities(req.user.id);
+  const socialOnly = !!caps?.socialRaterOnly;
+  const competencies = await prisma.competency.findMany({
+    where: { active: true, ...(socialOnly ? socialCategoryWhere : {}) },
+    orderBy: { order: "asc" },
+  });
   res.json({
     id: request.id,
     reviewerRole: request.reviewerRole,
     status: request.status,
     dueDate: request.dueDate,
+    socialOnly,
     subject: { id: request.review.subject.id, name: `${request.review.subject.firstName} ${request.review.subject.lastName}`, title: request.review.subject.title },
     cycle: { id: request.review.cycle.id, name: request.review.cycle.name },
     competencies,
@@ -73,6 +92,17 @@ router.post("/request/:id", requireAuth, async (req, res) => {
   for (const r of ratings) {
     if (!r.competencyId || typeof r.score !== "number" || r.score < 1 || r.score > 5) {
       return res.status(400).json({ error: "Each rating needs competencyId and a score 1-5" });
+    }
+  }
+
+  // Enforce the social-rater restriction server-side (the form already hides
+  // non-social competencies, but never trust the client).
+  const caps = await raterCapabilities(req.user.id);
+  if (caps?.socialRaterOnly) {
+    const ids = [...new Set(ratings.map((r) => r.competencyId))];
+    const rated = await prisma.competency.findMany({ where: { id: { in: ids } }, select: { id: true, category: true } });
+    if (rated.length !== ids.length || rated.some((c) => !isSocialCompetency(c))) {
+      return res.status(403).json({ error: "Support staff may only rate social/soft competencies." });
     }
   }
 
