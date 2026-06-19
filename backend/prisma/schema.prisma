@@ -25,6 +25,7 @@ enum Role {
   ADMIN
   MANAGER
   ATTORNEY
+  SUPPORT // support staff (paralegal/secretary/typist) — social/soft raters only
   CLIENT
 }
 
@@ -53,6 +54,7 @@ enum ReviewerRole {
   MANAGER
   PEER
   SUBORDINATE
+  SUPPORT // support staff (paralegal/secretary/typist) — rate social/soft competencies only
   CLIENT
 }
 
@@ -67,6 +69,12 @@ enum GoalStatus {
   IN_PROGRESS
   ACHIEVED
   MISSED
+}
+
+// Lightweight continuous feedback given between formal review cycles.
+enum FeedbackKind {
+  PRAISE // positive recognition / kudos
+  NOTE   // a quick constructive observation
 }
 
 // ─────────────────────────────  CORE  ─────────────────────────────
@@ -87,7 +95,8 @@ model User {
   firstName    String
   lastName     String
   role         Role
-  title        String? // e.g. "Senior Associate", "Partner"
+  title        String? // human label, e.g. "Senior Associate" (usually the position's label)
+  position     String? // catalog key from lib/positions.js; derives role tier + capabilities
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -117,6 +126,13 @@ model User {
   // AI memory profile (one per attorney) + in-app notifications
   memory        AttorneyMemory? @relation("AttorneyMemory")
   notifications Notification[]  @relation("UserNotifications")
+
+  // Continuous feedback (praise/notes) given and received, between formal cycles
+  feedbackGiven    ContinuousFeedback[] @relation("FeedbackAuthor")
+  feedbackReceived ContinuousFeedback[] @relation("FeedbackRecipient")
+  // 1:1 meeting logs as the manager, and as the report
+  oneOnOnesAsManager OneOnOne[] @relation("OneOnOneManager")
+  oneOnOnesAsReport  OneOnOne[] @relation("OneOnOneReport")
 }
 
 model ReviewCycle {
@@ -233,6 +249,8 @@ model Rating {
   @@unique([responseId, competencyId])
 }
 
+// An OKR objective. Measurable progress lives in its KeyResults and rolls up as
+// their average; `status` is the coarse lifecycle the owner/manager sets.
 model Goal {
   id          String     @id @default(cuid())
   // A goal can hang off a specific review or just off the attorney
@@ -240,12 +258,63 @@ model Goal {
   review      PerformanceReview? @relation(fields: [reviewId], references: [id], onDelete: SetNull)
   ownerId     String
   owner       User       @relation(fields: [ownerId], references: [id])
+  // Who created it. If different from ownerId, a manager assigned it.
+  createdById String?
   title       String
   description String?    @db.Text
   status      GoalStatus @default(OPEN)
   dueDate     DateTime?
+  keyResults  KeyResult[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+// A measurable result under an objective. progress is a 0–100 percent; the
+// parent objective's progress is the average of its key results.
+model KeyResult {
+  id        String   @id @default(cuid())
+  goalId    String
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title     String
+  progress  Int      @default(0) // 0..100
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([goalId])
+}
+
+// Continuous feedback: a single praise/note from one person to another, outside
+// the formal 360 cycle. Visible to the recipient and their manager (+ author, admin).
+model ContinuousFeedback {
+  id          String       @id @default(cuid())
+  authorId    String
+  author      User         @relation("FeedbackAuthor", fields: [authorId], references: [id])
+  recipientId String
+  recipient   User         @relation("FeedbackRecipient", fields: [recipientId], references: [id])
+  kind        FeedbackKind @default(PRAISE)
+  body        String       @db.Text
+  createdAt   DateTime     @default(now())
+
+  @@index([recipientId, createdAt])
+  @@index([authorId])
+}
+
+// A lightweight 1:1 meeting log between a manager and a report. `notes` is shared
+// — both the manager and the report can read it.
+model OneOnOne {
+  id          String   @id @default(cuid())
+  managerId   String
+  manager     User     @relation("OneOnOneManager", fields: [managerId], references: [id])
+  reportId    String
+  report      User     @relation("OneOnOneReport", fields: [reportId], references: [id])
+  heldOn      DateTime @default(now())
+  notes       String   @db.Text
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([reportId, heldOn])
+  @@index([managerId, heldOn])
 }
 
 // Immutable audit trail of report state transitions / actions

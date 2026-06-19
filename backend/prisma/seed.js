@@ -4,6 +4,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { SOCIAL_CATEGORIES } from "../src/lib/competencies.js";
 
 const prisma = new PrismaClient();
 const PW = bcrypt.hashSync("Password123!", 10);
@@ -47,34 +48,39 @@ async function main() {
   });
 
   const admin = await prisma.user.create({
-    data: { email: "admin@mostoeneng.law", passwordHash: PW, firstName: "Ava", lastName: "Mokoena", role: "ADMIN", title: "HR Director" },
+    data: { email: "admin@mostoeneng.law", passwordHash: PW, firstName: "Ava", lastName: "Mokoena", role: "ADMIN", title: "HR Director", position: "administrator" },
   });
 
   const manager = await prisma.user.create({
     data: {
       email: "t.dlamini@mostoeneng.law", passwordHash: PW, firstName: "Thabo", lastName: "Dlamini",
-      role: "MANAGER", title: "Partner", practiceGroupId: group.id,
+      role: "MANAGER", title: "Partner", position: "partner", practiceGroupId: group.id,
     },
   });
   await prisma.practiceGroup.update({ where: { id: group.id }, data: { headId: manager.id } });
 
   // Attorneys reporting to the manager
   const khumalo = await prisma.user.create({
-    data: { email: "n.khumalo@mostoeneng.law", passwordHash: PW, firstName: "Naledi", lastName: "Khumalo", role: "ATTORNEY", title: "Senior Associate", managerId: manager.id, practiceGroupId: group.id },
+    data: { email: "n.khumalo@mostoeneng.law", passwordHash: PW, firstName: "Naledi", lastName: "Khumalo", role: "ATTORNEY", title: "Senior Associate", position: "senior_associate", managerId: manager.id, practiceGroupId: group.id },
   });
   const naidoo = await prisma.user.create({
-    data: { email: "s.naidoo@mostoeneng.law", passwordHash: PW, firstName: "Sanjay", lastName: "Naidoo", role: "ATTORNEY", title: "Associate", managerId: manager.id, practiceGroupId: group.id },
+    data: { email: "s.naidoo@mostoeneng.law", passwordHash: PW, firstName: "Sanjay", lastName: "Naidoo", role: "ATTORNEY", title: "Associate", position: "associate", managerId: manager.id, practiceGroupId: group.id },
   });
   const botha = await prisma.user.create({
-    data: { email: "l.botha@mostoeneng.law", passwordHash: PW, firstName: "Lize", lastName: "Botha", role: "ATTORNEY", title: "Associate", managerId: manager.id, practiceGroupId: group.id },
+    data: { email: "l.botha@mostoeneng.law", passwordHash: PW, firstName: "Lize", lastName: "Botha", role: "ATTORNEY", title: "Associate", position: "associate", managerId: manager.id, practiceGroupId: group.id },
   });
   // A junior who reports to Khumalo (so Khumalo has a subordinate for 360)
   const junior = await prisma.user.create({
-    data: { email: "p.moyo@mostoeneng.law", passwordHash: PW, firstName: "Peter", lastName: "Moyo", role: "ATTORNEY", title: "Candidate Attorney", managerId: khumalo.id, practiceGroupId: group.id },
+    data: { email: "p.moyo@mostoeneng.law", passwordHash: PW, firstName: "Peter", lastName: "Moyo", role: "ATTORNEY", title: "Candidate Attorney", position: "candidate_attorney", managerId: khumalo.id, practiceGroupId: group.id },
+  });
+
+  // Support staff — a social/soft rater (paralegal). Demonstrates the SUPPORT tier.
+  const paralegal = await prisma.user.create({
+    data: { email: "k.dube@mostoeneng.law", passwordHash: PW, firstName: "Kgomotso", lastName: "Dube", role: "SUPPORT", title: "Paralegal", position: "paralegal", managerId: manager.id, practiceGroupId: group.id },
   });
 
   const client = await prisma.user.create({
-    data: { email: "client@acme-holdings.com", passwordHash: PW, firstName: "Grace", lastName: "Adeyemi", role: "CLIENT", title: "General Counsel", clientAccount: "Acme Holdings" },
+    data: { email: "client@acme-holdings.com", passwordHash: PW, firstName: "Grace", lastName: "Adeyemi", role: "CLIENT", title: "General Counsel", position: "client", clientAccount: "Acme Holdings" },
   });
 
   console.log("Seeding cycles…");
@@ -129,6 +135,19 @@ async function main() {
     await prisma.feedbackRequest.update({ where: { id: req.id }, data: { status: "SUBMITTED" } });
   }
 
+  // Support staff submit social/soft competencies only (the Stage 2 restriction).
+  async function submitSupportFeedback(reviewId, reviewerId, baseScore, sourceWeight, strengths, improvements) {
+    const req = await prisma.feedbackRequest.findFirst({ where: { reviewId, reviewerId, reviewerRole: "SUPPORT" } });
+    if (!req) return;
+    const resp = await prisma.feedbackResponse.create({ data: { requestId: req.id, sourceWeight, strengths, improvements } });
+    const social = compList.filter((c) => SOCIAL_CATEGORIES.includes(c.category));
+    for (const c of social) {
+      const score = Math.max(1, Math.min(5, baseScore + (Math.random() < 0.4 ? (Math.random() < 0.5 ? -1 : 1) : 0)));
+      await prisma.rating.create({ data: { responseId: resp.id, competencyId: c.id, score, comment: null } });
+    }
+    await prisma.feedbackRequest.update({ where: { id: req.id }, data: { status: "SUBMITTED" } });
+  }
+
   async function logEvent(reviewId, actorId, action, note) {
     await prisma.reportEvent.create({ data: { reviewId, actorId, action, note } });
   }
@@ -155,8 +174,43 @@ async function main() {
   await logEvent(q1Review.id, manager.id, "SUBMITTED", null);
   await logEvent(q1Review.id, manager.id, "FINALIZED", null);
   await logEvent(q1Review.id, admin.id, "APPROVED", "Approved at calibration meeting.");
+  // ── Goals / OKRs: objectives with measurable key results that roll up ──
+  // Manager-assigned objective tied to the approved Q1 review.
   await prisma.goal.create({
-    data: { reviewId: q1Review.id, ownerId: khumalo.id, title: "Originate R500k of new work", description: "Lead two BD pitches this year.", status: "IN_PROGRESS", dueDate: new Date("2026-12-31") },
+    data: {
+      reviewId: q1Review.id, ownerId: khumalo.id, createdById: manager.id,
+      title: "Originate R500k of new work", description: "Lead two BD pitches this year and convert at least one.",
+      status: "IN_PROGRESS", dueDate: new Date("2026-12-31"),
+      keyResults: { create: [
+        { title: "Lead 2 new-business pitches", progress: 50 },
+        { title: "Convert R500k in new instructions", progress: 30 },
+        { title: "Attend 4 industry networking events", progress: 75 },
+      ] },
+    },
+  });
+  // A self-set development objective (no review link).
+  await prisma.goal.create({
+    data: {
+      ownerId: khumalo.id, createdById: khumalo.id,
+      title: "Grow as a courtroom advocate", description: "Build advocacy experience toward a senior profile.",
+      status: "OPEN",
+      keyResults: { create: [
+        { title: "Second-chair 3 hearings", progress: 33 },
+        { title: "Complete an advanced advocacy course", progress: 0 },
+      ] },
+    },
+  });
+  // Naidoo: an early-career objective, partially progressed.
+  await prisma.goal.create({
+    data: {
+      ownerId: naidoo.id, createdById: naidoo.id,
+      title: "Sharpen time management", description: "Hit deadlines consistently across matters.",
+      status: "IN_PROGRESS",
+      keyResults: { create: [
+        { title: "Log time daily for the full quarter", progress: 60 },
+        { title: "Zero missed filing deadlines", progress: 80 },
+      ] },
+    },
   });
 
   // ── Q2: in-flight cycle ──
@@ -172,15 +226,41 @@ async function main() {
   await submitFeedback(q2Khumalo.id, client.id, "CLIENT", 5, 0.9, "Excellent service.", null);
   await logEvent(q2Khumalo.id, khumalo.id, "LAUNCHED", null);
   await logEvent(q2Khumalo.id, manager.id, "DRAFT_SAVED", null);
+  // Support staff (paralegal): social/soft feedback submitted on Khumalo's in-flight review.
+  await prisma.feedbackRequest.create({
+    data: { reviewId: q2Khumalo.id, reviewerId: paralegal.id, reviewerRole: "SUPPORT", dueDate: new Date(q2.periodEnd), status: "PENDING" },
+  });
+  await submitSupportFeedback(q2Khumalo.id, paralegal.id, 4, 0.7, "Always professional and approachable with the support team.", "Could brief us on matter context a little earlier.");
 
   // Naidoo: launched, only self submitted (low completion — good demo of analytics)
   const q2Naidoo = await createReview(naidoo, q2, manager, { status: "LAUNCHED" });
   await prisma.performanceReview.update({ where: { id: q2Naidoo.id }, data: { launchedAt: daysAgo(4) } });
   await submitFeedback(q2Naidoo.id, naidoo.id, "SELF", 3, 0.8, "Learning fast.", "Time management.");
   await logEvent(q2Naidoo.id, naidoo.id, "LAUNCHED", null);
+  // Support staff (paralegal): a PENDING social-only request — logging in as the
+  // paralegal shows the restricted feedback form live.
+  await prisma.feedbackRequest.create({
+    data: { reviewId: q2Naidoo.id, reviewerId: paralegal.id, reviewerRole: "SUPPORT", dueDate: new Date(q2.periodEnd), status: "PENDING" },
+  });
 
   // Botha: not yet launched (the launch button is live for her)
   await createReview(botha, q2, manager, { status: "NOT_STARTED" });
+
+  // ── Continuous feedback (praise/notes) + 1:1s between the formal cycles ──
+  console.log("Seeding continuous feedback & 1:1s…");
+  await prisma.continuousFeedback.createMany({
+    data: [
+      { authorId: manager.id,   recipientId: khumalo.id, kind: "PRAISE", body: "Outstanding work closing the Acme transaction ahead of the deadline — the client noticed." },
+      { authorId: naidoo.id,    recipientId: khumalo.id, kind: "PRAISE", body: "Thanks for walking me through the diligence checklist — it really clarified things." },
+      { authorId: paralegal.id, recipientId: khumalo.id, kind: "PRAISE", body: "Always clear with instructions and respectful of the support team's time." },
+      { authorId: manager.id,   recipientId: naidoo.id,  kind: "NOTE",   body: "Great progress this month. Let's keep an eye on turnaround time on the smaller matters." },
+      { authorId: khumalo.id,   recipientId: naidoo.id,  kind: "PRAISE", body: "Your research memo on the Botha matter was thorough and well-structured." },
+    ],
+  });
+
+  await prisma.oneOnOne.create({ data: { managerId: manager.id, reportId: khumalo.id, createdById: manager.id, heldOn: daysAgo(20), notes: "Checked in on the partnership track. Agreed to put Naledi forward to lead the next BD pitch. She's keen on more courtroom exposure — will look for a second-chair opportunity." } });
+  await prisma.oneOnOne.create({ data: { managerId: manager.id, reportId: khumalo.id, createdById: manager.id, heldOn: daysAgo(6), notes: "Reviewed Q2 goals. BD pipeline on track. Discussed delegating more routine drafting to free up origination time." } });
+  await prisma.oneOnOne.create({ data: { managerId: manager.id, reportId: naidoo.id, createdById: manager.id, heldOn: daysAgo(10), notes: "Time-management focus: set up a daily time-logging habit and a weekly deadline check. Sanjay feels well-supported." } });
 
   console.log("Done. Login with Password123!");
 }
