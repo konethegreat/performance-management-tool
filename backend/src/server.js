@@ -13,6 +13,10 @@ import aiRoutes from "./routes/ai.js";
 import notificationRoutes from "./routes/notifications.js";
 import widgetRoutes from "./routes/widgets.js";
 import activityRoutes from "./routes/activity.js";
+import goalRoutes from "./routes/goals.js";
+import continuousRoutes from "./routes/continuous.js";
+import cadenceRoutes from "./routes/cadence.js";
+import searchRoutes from "./routes/search.js";
 
 const app = express();
 
@@ -32,6 +36,10 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/widgets", widgetRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/goals", goalRoutes);
+app.use("/api/continuous", continuousRoutes);
+app.use("/api/cadence", cadenceRoutes);
+app.use("/api/search", searchRoutes);
 
 // Fallthrough error handler
 app.use((err, _req, res, _next) => {
