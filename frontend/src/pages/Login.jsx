@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const DEMO = [
@@ -38,7 +38,7 @@ export default function Login() {
       <div className="login-card">
         <div className="brand big">
           <span className="brand-mark">M</span>
-          <div><strong>Mostoeneng</strong><small>Performance Management</small></div>
+          <div><strong>Motsoeneng Bill</strong><small>Performance Management</small></div>
         </div>
         <form onSubmit={submit}>
           <label>Email
@@ -50,6 +50,7 @@ export default function Login() {
           {err && <div className="error">{err}</div>}
           <button className="btn primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         </form>
+        <p className="auth-switch">New here? <Link to="/register">Create an account</Link></p>
         <div className="demo-logins">
           <p>Demo accounts (password <code>Password123!</code>):</p>
           {DEMO.map(([label, mail]) => (

@@ -51,8 +51,19 @@ Seeded logins, password `Password123!` for all:
 
 ## Core domain model (the big picture)
 
-- **Roles:** `ADMIN`, `MANAGER`, `ATTORNEY`, `CLIENT`. The 360 feedback *sources* are a
-  separate enum: `SELF`, `MANAGER`, `PEER`, `SUBORDINATE`, `CLIENT`.
+- **Roles (capability tiers):** `ADMIN`, `MANAGER`, `ATTORNEY`, `SUPPORT`, `CLIENT`. The 360
+  feedback *sources* are a separate enum: `SELF`, `MANAGER`, `PEER`, `SUBORDINATE`, `SUPPORT`, `CLIENT`
+  (`SUPPORT` raters are weighted 0.7 and may score only social/soft competencies — see Feature stages).
+- **Positions vs roles:** `Role` is the small set of permission tiers; the human job title is a
+  `User.position` catalog key (`backend/src/lib/positions.js`) that maps each position →
+  a tier + capability flags (`firmWide`, `manageReports`, `reviewSubject`, `socialRaterOnly`).
+  Don't add a dashboard per title — map titles onto tiers. Sign-up (`POST /api/auth/register`,
+  list via `GET /api/auth/positions`) derives the tier from the chosen position; leadership/
+  firm-wide and client positions are admin-provisioned, not self-registerable. `publicUser`
+  returns `position` + derived `capabilities`; use `capabilitiesForUser(user)` (position-first,
+  role fallback) rather than hardcoding role checks for new capability-gated features. SUPPORT =
+  social/soft raters only — now **enforced** server-side (Stage 2): they may rate only competencies
+  whose `category` is social (`backend/src/lib/competencies.js`). See Feature stages below.
 - **Review lifecycle:** `NOT_STARTED → LAUNCHED → DRAFT → IN_REVIEW → FINALIZED → APPROVED`.
   A manager can `send-back` (→ `DRAFT`) any time before `APPROVED`. Approved reports are
   immutable and feed the annual rollup.
@@ -66,6 +77,10 @@ Seeded logins, password `Password123!` for all:
   matter, which voices matter) in one number.
 - **Annual rollup:** an `ANNUAL` `ReviewCycle` is the parent of four quarterly `children`;
   `GET /api/dashboard/rollup/:attorneyId/:annualCycleId` averages the approved quarters.
+- **Department KPIs:** `GET /api/dashboard/departments` (ADMIN/MANAGER) aggregates per
+  `PracticeGroup` — avg composite score, completion %, overdue/SLA, cycle time, and
+  source-weighted competency strengths vs improvement areas — ranked by effectiveness. Powers
+  the `/departments` page.
 - **Audit:** every state transition writes a `ReportEvent` (immutable trail).
 
 ## Cross-cutting conventions
@@ -95,17 +110,76 @@ Seeded logins, password `Password123!` for all:
 - **AI is optional and server-side.** `backend/src/lib/ai/*` calls the Anthropic SDK;
   `aiEnabled()` gates everything on `AI_ENABLED !== "false"` + `ANTHROPIC_API_KEY`. When off,
   AI routes return `{ aiEnabled: false }` (HTTP 200) and the UI degrades — never assume AI is
-  available. Default model `claude-opus-4-8`, override via `AI_MODEL`. Key lives in
-  `backend/.env` (gitignored) and must never reach the frontend.
+  available. Key lives in `backend/.env` (gitignored) and must never reach the frontend.
+- **Tiered model routing (`ai/client.js`).** Each task uses the right model instead of one
+  model for everything: `model("fast")` → Haiku (`claude-haiku-4-5-20251001`, bias/quality
+  check), `model("balanced")` → Sonnet (`claude-sonnet-4-6`, review organizer),
+  `model("deep")` → Opus (`claude-opus-4-8`, report draft + attorney memory). Each tier is
+  overridable via `AI_MODEL_FAST/BALANCED/DEEP`; setting `AI_MODEL` pins ALL tiers to one
+  model (legacy escape hatch). `logRun({..., model})` records the actual model used per call,
+  and `models()` feeds the tier map to `/api/ai/status` for the top-bar chip. When adding an
+  AI feature, pick a tier deliberately and pass its model into `logRun`.
 - **Features:** Review Organizer, Bias & Quality Check, Report Draft Assistant, Attorney
-  Memory (auto-refreshed on `APPROVED`). All outputs are AI-labelled, editable, never
-  auto-finalized; every call writes an `AiRun` audit row.
+  Memory (auto-refreshed on `APPROVED`), and **Team Briefing** (`POST /api/ai/briefing`,
+  manager/admin — a ranked situational read of in-flight reviews shown atop the manager
+  dashboard; `lib/ai/briefing.js`, Sonnet/`balanced`, reuses the dashboard's review scoping +
+  scoring helpers). All outputs are AI-labelled, advisory, never auto-finalized; every call
+  writes an `AiRun` audit row.
+- **Individual Development Plan (IDP):** `GET /api/ai/attorneys/:id/development-plan`
+  (`lib/ai/developmentPlan.js`, Opus/`deep`) generates a kind, growth-oriented plan — opening
+  note, strengths to build on, growth areas with concrete actions, suggested goals,
+  encouragement — from the attorney's memory + latest **approved** competency breakdown +
+  goals. Readable by the attorney themselves, their manager, or admin (`canSeeMemory`); built
+  only from approved data so it respects the mid-cycle visibility rule. Shown on
+  `AttorneyDashboard` and downloadable as a letterhead PDF (`pdf/DevelopmentPlan.jsx`). The
+  tone is deliberately developmental, never judgemental — the PMS is meant to help, not just grade.
 - **Privacy/POPIA:** AI sends review text to Anthropic. Documented in README/ARCHITECTURE;
   `AI_ENABLED="false"` ships it off.
 - **Notifications:** `Notification` rows written by `backend/src/lib/notify.js` on launch +
   state changes; surfaced via the top-bar bell and an SLA nudge banner. In-app only.
 - **PDF export:** client-side `@react-pdf/renderer` in `frontend/src/pdf/` (review, annual,
   client, team-snapshot) on the "Counsel" letterhead; `download.js` triggers on click.
+
+## Feature stages (2–6, built on top of v1)
+
+A staged roadmap layered onto the v1 above. All are live; schema changes ship via `prisma db push`
+(no migrations), so after pulling, run `npm run db:push && npm run db:seed` once. Each stage was
+verified on the real Windows FS (`prisma validate`, `node --check`, `esbuild`).
+
+- **Stage 2 — Social/support raters.** `SUPPORT` staff (paralegals/secretaries/typists) may rate
+  only **social/soft** competencies = the `Behavioural` category. Single source of truth:
+  `backend/src/lib/competencies.js` (`SOCIAL_CATEGORIES`, `isSocialCompetency`, `socialCategoryWhere`).
+  Enforcement is **capability-based** (`capabilitiesForUser().socialRaterOnly`), not role-enum:
+  `GET /api/feedback/request/:id` filters the framework + returns `socialOnly`; `POST` 403s any
+  non-social rating. `ReviewerRole.SUPPORT` (source weight 0.7) is in the live `build360` fan-out
+  (same practice group, cap 2). UI: `.rater-note` on FeedbackForm; `sourceLabel.SUPPORT`.
+
+- **Stage 3 — Goals/OKRs.** `Goal` = an objective; `KeyResult` (new model, `progress` 0–100) rolls
+  up to objective progress (avg, computed in-route, not stored). `Goal.createdById` ≠ ownerId ⇒
+  manager-assigned. `routes/goals.js` (`/api/goals`): objective + key-result CRUD, authz via
+  `canManageGoalsFor` (owner / their manager / admin). UI: reusable `components/Goals.jsx` on the
+  attorney dashboard and `ReviewDetail` (manager can assign, linked via `reviewId`); IDP
+  `suggestedGoals` got an "Add to goals" button.
+
+- **Stage 4 — Continuous feedback & 1:1s.** `ContinuousFeedback` (author, recipient,
+  `FeedbackKind` PRAISE|NOTE, body) — visible to recipient + their manager + author + admin
+  (`canViewPerson`); no anonymous notes. `OneOnOne` (manager, report, heldOn, shared `notes`) —
+  manager/admin maintains, shared-read with the report (`canManageOneOnOne`). `routes/continuous.js`
+  (`/api/continuous`). UI: `RecognitionPanel.jsx` + `OneOnOnes.jsx` on the attorney dashboard and
+  ReviewDetail. Both notify the recipient.
+
+- **Stage 5 — Cadence, reminders, digests.** `routes/cadence.js` (`/api/cadence`): `GET /calendar`
+  (cycles + live completion/SLA), `POST /remind` (manager/admin; writes `FEEDBACK_REMINDER`
+  notifications), `GET /digest`, `POST /digest/email`. Logic in `lib/reminders.js`; email via the
+  `lib/email.js` seam — **log-only** (no transport) unless `EMAIL_ENABLED=true` + a transport is
+  added in `deliver()`. `scripts/reminders.js` + `npm run reminders` is a cron-ready sweep (schedule
+  via Windows Task Scheduler). UI: `pages/Cadence.jsx` (timeline), `components/DigestCard.jsx`,
+  "Send reminders"/"Remind pending" buttons, `pages/Notifications.jsx`.
+
+- **Stage 6 — UX polish.** AI Briefing auto-loads on the manager dashboard. Global command bar
+  (`components/CommandBar.jsx`, ⌘K) backed by `routes/search.js` (`/api/search` — role-scoped people
+  + reviews) plus page nav. Richer `Empty` component (icon + action). Firm-wide trends
+  (`GET /api/dashboard/trends`) shown atop the Departments page.
 
 ## Where to read more
 

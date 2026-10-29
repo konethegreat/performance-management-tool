@@ -78,6 +78,13 @@ export default function FeedbackForm() {
     <div className="form-page">
       <h1>{heading}</h1>
       <p className="subtitle">Rate each competency on a 1–5 scale. Comments are optional but valued.</p>
+      {form.socialOnly && (
+        <p className="rater-note">
+          As support staff, you're asked to rate the social and conduct competencies only — how this
+          person communicates, collaborates and upholds professional standards. Technical, client and
+          business dimensions are left to attorneys, managers and clients.
+        </p>
+      )}
 
       <div className="card">
         {form.competencies.map((c) => (

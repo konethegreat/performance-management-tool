@@ -7,6 +7,8 @@ import { Avatar } from "../components/Avatar.jsx";
 import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import { WeekSchedule } from "../components/WeekSchedule.jsx";
 import { ActivityFeed } from "../components/ActivityFeed.jsx";
+import { AiBriefing } from "../components/AiBriefing.jsx";
+import { DigestCard } from "../components/DigestCard.jsx";
 import { useToast } from "../components/Toast.jsx";
 import TeamSnapshot from "../pdf/TeamSnapshot.jsx";
 import { downloadPdf } from "../pdf/download.js";
@@ -28,12 +30,22 @@ export default function ManagerDashboard() {
     try { await downloadPdf(<TeamSnapshot summary={s} rows={data.reviews} />, "team-snapshot.pdf"); }
     catch (e) { toast(e.message, "error"); }
   }
+  async function sendReminders() {
+    try {
+      const res = await api.post("/cadence/remind", {});
+      toast(res.remindersSent ? `Sent ${res.remindersSent} reminder${res.remindersSent === 1 ? "" : "s"}` : "No outstanding feedback to remind", "success");
+    } catch (e) { toast(e.message, "error"); }
+  }
   return (
     <div>
       <OverviewHeader />
       <WeekSchedule />
       <h1>Team Performance</h1>
       <p className="subtitle">Every review you own, with live completion and cycle-time tracking from the launch button.</p>
+
+      <AiBriefing />
+
+      <DigestCard />
 
       {s.overdueCount > 0 && (
         <div className="sla-banner">
@@ -53,7 +65,10 @@ export default function ManagerDashboard() {
       <div className="card">
         <div className="card-head">
           <h2>Reviews</h2>
-          {data.reviews.length > 0 && <button className="btn small" onClick={exportPdf}>Export PDF</button>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn small" onClick={sendReminders}>Send reminders</button>
+            {data.reviews.length > 0 && <button className="btn small" onClick={exportPdf}>Export PDF</button>}
+          </div>
         </div>
         <table className="table">
           <thead>

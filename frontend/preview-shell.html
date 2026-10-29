@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mostoeneng — Shell preview</title>
+  <!-- Links the REAL stylesheet so this preview matches the app exactly. -->
+  <link rel="stylesheet" href="./src/styles.css" />
+  <style>
+    /* preview-only helpers; the app supplies these via JS components */
+    .sw{display:inline-block;width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:8px;border:1px solid var(--line)}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- LEFT RAIL -->
+    <aside class="rail">
+      <div class="rail-mark"><span>M</span></div>
+      <nav class="rail-nav">
+        <a class="rail-item active" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3.13a4 4 0 0 1 0 7.75M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></svg>
+          <span>Team</span>
+        </a>
+        <a class="rail-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+          <span>Departments</span>
+        </a>
+        <a class="rail-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+          <span>My Reviews</span>
+        </a>
+        <a class="rail-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Feedback</span>
+        </a>
+        <a class="rail-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Admin</span>
+        </a>
+      </nav>
+      <div class="rail-foot">
+        <button class="rail-signout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Sign out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- BODY -->
+    <div class="shell-body">
+      <header class="shell-top">
+        <div class="shell-title">
+          <strong>Motsoeneng Bill</strong>
+          <small>Team · Performance Management</small>
+        </div>
+        <div class="shell-top-spacer"></div>
+        <div class="shell-top-right">
+          <span class="ai-chip on">✦ Haiku · Sonnet · Opus</span>
+          <button class="bell-btn">◔</button>
+          <div class="user-chip">
+            <span class="avatar avatar-fallback" style="width:36px;height:36px;font-size:0.95rem;">TN</span>
+            <div class="user-meta"><strong>Trevir Noah</strong><small>Managing Partner</small></div>
+          </div>
+        </div>
+      </header>
+
+      <main class="shell-main">
+        <div class="overview-header">
+          <div class="oh-left">
+            <span class="avatar avatar-fallback" style="width:52px;height:52px;font-size:1.4rem;">TN</span>
+            <div>
+              <h1>Good evening, Trevir</h1>
+              <p class="oh-quote">“The first duty of society is justice.” — a quiet productive day ahead.</p>
+            </div>
+          </div>
+          <div class="oh-right">
+            <div class="oh-weather"><span class="oh-temp">18°</span></div>
+            <div class="oh-date">Wed, 17 Jun 2026</div>
+          </div>
+        </div>
+
+        <div class="ai-panel briefing">
+          <div class="briefing-head">
+            <h3>✦ AI Briefing <span class="ai-badge">✦ assistive</span></h3>
+            <button class="btn ai small">Refresh</button>
+          </div>
+          <p class="briefing-headline">Two reviews are past SLA and Naidoo's cycle has stalled at the peer stage — collaboration is the firm-wide soft spot this quarter.</p>
+          <ol class="briefing-priorities">
+            <li><span class="pill red">high</span><span class="briefing-pri-text"><strong>Nudge S. Naidoo's peers</strong><small>3 of 5 peer responses outstanding at day 11 — past the 7-day SLA from launch.</small></span></li>
+            <li><span class="pill amber">medium</span><span class="briefing-pri-text"><strong>Finalise P. Mokoena's draft</strong><small>Feedback complete and sitting in Draft for 4 days; ready to move to review.</small></span></li>
+            <li><span class="pill grey">low</span><span class="briefing-pri-text"><strong>Acknowledge N. Khumalo</strong><small>Approved at 4.2 — strongest composite this cycle; worth a note.</small></span></li>
+          </ol>
+          <div class="briefing-watch">
+            <h4>Worth watching</h4>
+            <ul><li>Collaboration trails the firm average by ~0.7 across three attorneys.</li><li>Average cycle time is creeping up vs last quarter.</li></ul>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">12</div><div class="stat-label">Active cycles</div><div class="stat-hint">Q2 2026</div></div>
+          <div class="stat"><div class="stat-value green">86%</div><div class="stat-label">Feedback completion</div><div class="stat-hint">on track</div></div>
+          <div class="stat"><div class="stat-value amber">4</div><div class="stat-label">Awaiting review</div><div class="stat-hint">SLA 2 days</div></div>
+          <div class="stat"><div class="stat-value">3.9</div><div class="stat-label">Avg composite</div><div class="stat-hint">of 5.0</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h2>Reviews in flight</h2><small>this quarter</small></div>
+            <table class="table">
+              <thead><tr><th>Attorney</th><th>Stage</th><th>Score</th></tr></thead>
+              <tbody>
+                <tr><td>N. Khumalo</td><td><span class="pill green">Approved</span></td><td><span class="score green">4.2</span></td></tr>
+                <tr><td>S. Naidoo</td><td><span class="pill amber">In review</span></td><td><span class="score muted">—</span></td></tr>
+                <tr><td>P. Mokoena</td><td><span class="pill blue">Draft</span></td><td><span class="score muted">—</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>By competency</h2><small>firm average</small></div>
+            <div class="bar-row"><span class="bar-label">Legal acumen</span><span class="bar-track"><span class="bar-fill green" style="width:84%"></span></span><span class="bar-value">4.2</span></div>
+            <div class="bar-row"><span class="bar-label">Client care</span><span class="bar-track"><span class="bar-fill green" style="width:78%"></span></span><span class="bar-value">3.9</span></div>
+            <div class="bar-row"><span class="bar-label">Collaboration</span><span class="bar-track"><span class="bar-fill amber" style="width:64%"></span></span><span class="bar-value">3.2</span></div>
+            <div class="ai-panel">
+              <h3>◆ AI summary</h3>
+              <p style="margin:0">Collaboration scores trail the firm average; consider a cross-team mentoring pairing next cycle.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-panel devplan">
+          <div class="briefing-head">
+            <h3>✦ Your development plan <span class="ai-badge">✦ assistive</span></h3>
+            <div class="ai-actions" style="margin:0">
+              <button class="btn small">Download PDF</button>
+              <button class="btn ai small">Refresh</button>
+            </div>
+          </div>
+          <p class="briefing-headline">Nthabiseng, you've grown into one of the firm's most dependable drafters this year — your written work is consistently praised, and now it's worth turning some of that same care toward how you bring others along.</p>
+          <div class="devplan-section">
+            <h4>Strengths to build on</h4>
+            <ul class="devplan-list"><li>Precise, well-reasoned legal writing — repeatedly singled out by clients and your manager.</li><li>Reliability under deadline; matters rarely slip when they're with you.</li></ul>
+          </div>
+          <div class="devplan-section">
+            <h4>Growth areas</h4>
+            <div class="devplan-growth">
+              <strong>Collaboration across the team</strong>
+              <p class="devplan-why">Peers value your work but see less of your thinking early on — sharing it sooner would lift the whole group, and it plays to a strength you already have.</p>
+              <ul class="devplan-list"><li>Offer to walk a junior through one matter per cycle.</li><li>Share a short approach note before drafting on shared matters.</li></ul>
+            </div>
+          </div>
+          <div class="devplan-section">
+            <h4>Suggested goals for next cycle</h4>
+            <div class="goal"><span><strong>Mentor one junior associate</strong><br><small>Pair on at least two matters and give structured feedback.</small></span></div>
+          </div>
+          <p class="devplan-encouragement">You've earned real trust here — this next step is about sharing the strengths you already have, and the firm is better for it.</p>
+        </div>
+
+        <div class="launch-panel">
+          <div>
+            <h2>Launch a review cycle</h2>
+            <p>Fan out 360° feedback requests to managers, peers, subordinates, the client and self.</p>
+          </div>
+          <div class="launch-buttons"><button class="btn primary launch">Launch Q3 2026</button></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

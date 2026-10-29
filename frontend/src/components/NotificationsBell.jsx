@@ -58,6 +58,9 @@ export default function NotificationsBell() {
               <small>{new Date(n.createdAt).toLocaleString()}</small>
             </div>
           ))}
+          <div className="notif-foot">
+            <button className="btn ghost small" onClick={() => { setOpen(false); nav("/notifications"); }}>See all notifications</button>
+          </div>
         </div>
       )}
     </div>

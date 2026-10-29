@@ -10,6 +10,11 @@ export function StatusPill({ status }) {
     APPROVED: ["Approved", "green"],
     PENDING: ["Pending", "amber"],
     SUBMITTED: ["Submitted", "green"],
+    // Goal / OKR lifecycle
+    OPEN: ["Open", "grey"],
+    IN_PROGRESS: ["In progress", "blue"],
+    ACHIEVED: ["Achieved", "green"],
+    MISSED: ["Missed", "red"],
   };
   const [label, tone] = map[status] || [status, "grey"];
   return <span className={`pill ${tone}`}>{label}</span>;
@@ -58,5 +63,5 @@ export function Stat({ label, value, hint, tone }) {
 }
 
 export const sourceLabel = {
-  SELF: "Self", MANAGER: "Manager", PEER: "Peers", SUBORDINATE: "Subordinates", CLIENT: "Client",
+  SELF: "Self", MANAGER: "Manager", PEER: "Peers", SUBORDINATE: "Subordinates", SUPPORT: "Support staff", CLIENT: "Client",
 };

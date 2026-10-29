@@ -31,7 +31,7 @@ export function Header({ title, subtitle }) {
     <View>
       <View style={s.row}>
         <View>
-          <Text style={s.brand}>Mostoeneng</Text>
+          <Text style={s.brand}>Motsoeneng Bill</Text>
           <Text style={s.brandSub}>Counsel · Performance</Text>
         </View>
         <View>
@@ -48,7 +48,7 @@ export function Footer() {
   return (
     <Text
       style={s.footer}
-      render={({ pageNumber, totalPages }) => `Mostoeneng PMS · Confidential · ${pageNumber}/${totalPages}`}
+      render={({ pageNumber, totalPages }) => `Motsoeneng Bill PMS · Confidential · ${pageNumber}/${totalPages}`}
       fixed
     />
   );

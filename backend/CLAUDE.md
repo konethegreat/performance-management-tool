@@ -29,10 +29,15 @@ Health check: `GET /api/health`.
 src/server.js              Express app: CORS, JSON, morgan, mounts /api/* routers, error handler
 src/middleware/auth.js     signToken, requireAuth (verifies Bearer JWT → req.user), requireRole(...)
 src/routes/*.js            HTTP handlers + validation + authorization (auth, users, cycles,
-                           reviews, feedback, dashboard)
+                           reviews, feedback, dashboard, goals, continuous, cadence, search,
+                           ai, notifications, activity, widgets)
 src/lib/scoring.js         Pure functions: computeOverallScore, competencyBreakdown,
                            bySourceBreakdown, completionRate, cycleTime
+src/lib/competencies.js    SOCIAL_CATEGORIES + isSocialCompetency (Stage 2 social-rater tagging)
+src/lib/reminders.js       digests + reminder sweeps (Stage 5)
+src/lib/email.js           log-only mail seam (Stage 5; real transport drops into deliver())
 src/lib/prisma.js          Singleton PrismaClient
+scripts/reminders.js       cron-ready reminder sweep (npm run reminders)
 prisma/schema.prisma       The full relational model (read this first for any data change)
 prisma/seed.js             8-competency framework + group + users + Q1 APPROVED + Q2 in-flight
 ```
@@ -99,6 +104,24 @@ src/routes/activity.js      GET / — role-scoped recent ReportEvents (clients: 
   on AI. It also notifies the subject; `launch` notifies reviewers.
 - **New models/fields:** `AttorneyMemory`, `Notification`, `AiRun`; `FeedbackResponse.organized`
   (JSON string, cleared on resubmit), `PerformanceReview.aiDraftSummary`.
+
+## Feature-stage routes & models (Stages 2–6 — see ../CLAUDE.md for the why)
+
+- **Stage 2 (social raters):** `lib/competencies.js` (`SOCIAL_CATEGORIES = ["Behavioural"]`).
+  `feedback.js` resolves the rater's capabilities (`raterCapabilities`) and filters/enforces
+  social-only; `ReviewerRole` gained `SUPPORT` (weight 0.7 in `SOURCE_WEIGHT`), added to `build360`.
+- **Stage 3 (OKRs):** `KeyResult` model + `Goal.createdById`; `routes/goals.js` (`/api/goals`) —
+  objective + key-result CRUD, `canManageGoalsFor` (owner/manager/admin), progress rolled up in-route.
+- **Stage 4 (continuous feedback + 1:1s):** `ContinuousFeedback` + `OneOnOne` models (+ four User
+  back-relations); `routes/continuous.js` (`/api/continuous`) — `canViewPerson` / `canManageOneOnOne`;
+  both actions write a `Notification`.
+- **Stage 5 (cadence/reminders/digests):** `routes/cadence.js` (`/api/cadence`: calendar, remind,
+  digest, digest/email); `lib/reminders.js` + `lib/email.js` (log-only seam, gated on
+  `EMAIL_ENABLED`); `scripts/reminders.js` + `npm run reminders`. No schema change.
+- **Stage 6 (polish):** `routes/search.js` (`/api/search` — role-scoped people + reviews);
+  `dashboard.js` gained `GET /trends` (firm-wide per-cycle avg score + completion). No schema change.
+- **Authorization:** every stage route keeps the two-layer model (route gate + row-level
+  `canManage*`/`canView*` helpers). Use `capabilitiesForUser` for capability gates, not raw role checks.
 
 ## Things that will bite you
 

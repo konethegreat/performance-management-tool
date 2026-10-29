@@ -7,6 +7,12 @@ import { useToast } from "../components/Toast.jsx";
 import { OverviewHeader } from "../components/OverviewHeader.jsx";
 import { WeekSchedule } from "../components/WeekSchedule.jsx";
 import { ActivityFeed } from "../components/ActivityFeed.jsx";
+import { DevelopmentPlan } from "../components/DevelopmentPlan.jsx";
+import { Goals } from "../components/Goals.jsx";
+import { RecognitionPanel } from "../components/RecognitionPanel.jsx";
+import { OneOnOnes } from "../components/OneOnOnes.jsx";
+import { DigestCard } from "../components/DigestCard.jsx";
+import { Empty } from "../components/Empty.jsx";
 import AnnualReport from "../pdf/AnnualReport.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -53,6 +59,12 @@ export default function AttorneyDashboard() {
       <WeekSchedule />
       <h1>My Performance</h1>
       <p className="subtitle">Launch a review to start collecting 360° feedback. You'll see your full results once your manager approves the report.</p>
+
+      <DigestCard />
+
+      <DevelopmentPlan attorneyId={user.id} attorneyName={`${user.firstName} ${user.lastName}`} self />
+
+      <Goals ownerId={user.id} canManage self />
 
       {data.launchable.length > 0 && (
         <div className="launch-panel">
@@ -129,8 +141,12 @@ export default function AttorneyDashboard() {
             <Link className="btn small" to={`/reviews/${c.reviewId}`}>View detail</Link>
           </div>
         ))}
-        {data.cards.length === 0 && <p className="muted">No reviews yet — launch one above.</p>}
+        {data.cards.length === 0 && <Empty title="No reviews yet" hint="Launch a cycle above to start collecting 360° feedback." />}
       </div>
+
+      <RecognitionPanel ownerId={user.id} self canGive />
+
+      <OneOnOnes reportId={user.id} self />
 
       <ActivityFeed />
     </div>

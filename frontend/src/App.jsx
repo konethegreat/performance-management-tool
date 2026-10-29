@@ -2,13 +2,17 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 import ManagerDashboard from "./pages/ManagerDashboard.jsx";
+import DepartmentDashboard from "./pages/DepartmentDashboard.jsx";
 import AttorneyDashboard from "./pages/AttorneyDashboard.jsx";
 import ClientPortal from "./pages/ClientPortal.jsx";
 import ReviewDetail from "./pages/ReviewDetail.jsx";
 import FeedbackForm from "./pages/FeedbackForm.jsx";
 import MyFeedback from "./pages/MyFeedback.jsx";
 import Admin from "./pages/Admin.jsx";
+import Cadence from "./pages/Cadence.jsx";
+import Notifications from "./pages/Notifications.jsx";
 
 // Sends each role to its home dashboard
 function Home() {
@@ -16,6 +20,7 @@ function Home() {
   if (!user) return <Navigate to="/login" />;
   if (user.role === "ADMIN" || user.role === "MANAGER") return <Navigate to="/manager" />;
   if (user.role === "ATTORNEY") return <Navigate to="/me" />;
+  if (user.role === "SUPPORT") return <Navigate to="/feedback" />;
   return <Navigate to="/client" />;
 }
 
@@ -34,14 +39,18 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/manager" element={<Protected roles={["MANAGER", "ADMIN"]}><ManagerDashboard /></Protected>} />
+        <Route path="/departments" element={<Protected roles={["MANAGER", "ADMIN"]}><DepartmentDashboard /></Protected>} />
+        <Route path="/cadence" element={<Protected roles={["MANAGER", "ADMIN"]}><Cadence /></Protected>} />
         <Route path="/me" element={<Protected roles={["ATTORNEY", "MANAGER"]}><AttorneyDashboard /></Protected>} />
         <Route path="/client" element={<Protected roles={["CLIENT"]}><ClientPortal /></Protected>} />
         <Route path="/feedback" element={<Protected><MyFeedback /></Protected>} />
         <Route path="/feedback/:requestId" element={<Protected><FeedbackForm /></Protected>} />
         <Route path="/reviews/:id" element={<Protected><ReviewDetail /></Protected>} />
+        <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
         <Route path="/admin" element={<Protected roles={["ADMIN"]}><Admin /></Protected>} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />

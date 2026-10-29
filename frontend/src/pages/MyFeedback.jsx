@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { StatusPill, sourceLabel } from "../components/ui.jsx";
+import { Empty } from "../components/Empty.jsx";
 
 export default function MyFeedback() {
   const [items, setItems] = useState(null);
@@ -24,7 +25,7 @@ export default function MyFeedback() {
 
       <div className="card">
         <div className="card-head"><h2>Pending ({pending.length})</h2></div>
-        {pending.length === 0 && <p className="muted">All caught up.</p>}
+        {pending.length === 0 && <Empty title="All caught up" hint="No feedback is waiting on you right now." />}
         {pending.map((i) => (
           <FeedbackRow key={i.id} item={i} />
         ))}

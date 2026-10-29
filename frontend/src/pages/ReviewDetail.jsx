@@ -7,6 +7,9 @@ import { useToast } from "../components/Toast.jsx";
 import { useAiStatus } from "../hooks/useAiStatus.js";
 import { AiBadge } from "../components/AiBadge.jsx";
 import { Avatar } from "../components/Avatar.jsx";
+import { Goals } from "../components/Goals.jsx";
+import { RecognitionPanel } from "../components/RecognitionPanel.jsx";
+import { OneOnOnes } from "../components/OneOnOnes.jsx";
 import ReviewReport from "../pdf/ReviewReport.jsx";
 import { downloadPdf } from "../pdf/download.js";
 
@@ -85,6 +88,12 @@ export default function ReviewDetail() {
     try { await downloadPdf(<ReviewReport review={r} />, `review-${r.subject.name}-${r.cycle.name}.pdf`); }
     catch (e) { toast(e.message, "error"); }
   }
+  async function remindPending() {
+    try {
+      const res = await api.post("/cadence/remind", { reviewId: id });
+      toast(res.remindersSent ? `Reminded ${res.remindersSent} reviewer${res.remindersSent === 1 ? "" : "s"}` : "No pending reviewers to remind", "success");
+    } catch (e) { toast(e.message, "error"); }
+  }
 
   return (
     <div>
@@ -131,7 +140,7 @@ export default function ReviewDetail() {
       <div className="grid-2">
         {/* 360 sources */}
         <div className="card">
-          <div className="card-head"><h2>360° sources</h2></div>
+          <div className="card-head"><h2>360° sources</h2>{isManager && <button className="btn small" onClick={remindPending}>Remind pending</button>}</div>
           <table className="table compact">
             <tbody>
               {r.requests.map((q) => (
@@ -236,18 +245,25 @@ export default function ReviewDetail() {
         <div className="card"><div className="card-head"><h2>Manager's summary</h2></div><blockquote className="summary">{r.finalSummary}</blockquote></div>
       )}
 
-      {/* Goals */}
-      {r.goals.length > 0 && (
-        <div className="card">
-          <div className="card-head"><h2>Development goals</h2></div>
-          {r.goals.map((g) => (
-            <div className="goal" key={g.id}>
-              <div><strong>{g.title}</strong>{g.description && <small>{g.description}</small>}</div>
-              <span className={`pill ${g.status === "ACHIEVED" ? "green" : g.status === "MISSED" ? "red" : "amber"}`}>{g.status}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Goals & OKRs — manager can assign/manage; the attorney owns their own */}
+      <Goals
+        ownerId={r.subject.id}
+        canManage={isManager || r.subject.id === user.id}
+        reviewId={r.id}
+        title="Goals & OKRs"
+      />
+
+      {/* Continuous feedback the subject has received; manager can add more */}
+      <RecognitionPanel
+        ownerId={r.subject.id}
+        canGive={user.id !== r.subject.id}
+        fixedRecipientId={r.subject.id}
+        recipientName={r.subject.name}
+        title="Continuous feedback"
+      />
+
+      {/* 1:1 log between the manager and this attorney (shared notes) */}
+      <OneOnOnes reportId={r.subject.id} title="1:1 meetings" />
 
       {/* Audit trail */}
       <div className="card">
