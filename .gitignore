@@ -33,3 +33,11 @@ backend/prisma/migrations/dev.db*
 
 # ── design scratch / mockups ──
 docs/mockups/
+
+# >>> AgentOS local agent caches (rule files stay tracked) >>>
+.claude/settings.local.json
+.qoder/settings.local.json
+CLAUDE.local.md
+AGENTS.local.md
+GEMINI.local.md
+# <<< AgentOS <<<
